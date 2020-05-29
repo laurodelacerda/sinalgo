@@ -20,14 +20,14 @@
         <!-- Simulation -->
         <!--*********************************************************************** -->
         <!--Switches between synchronous and asynchronous mode. -->
-        <asynchronousMode value="false"/>
+        <asynchronousMode value="true"/>
 
         <!--If set to true, the runtime obtains for each node a new position from
             the mobility model at the beginning of each round. This flag needs to be
             turned on if the chosen mobility model of any node may change the node's
             position. Set this flag to FALSE for static graphs whose nodes do never change
             their position to increase performance. -->
-        <mobility value="true"/>
+        <mobility value="false"/>
 
         <!--If set to true, the chosen interference model is called at the end
             of every round to test for interferring packets. To increase performance,
@@ -137,7 +137,7 @@
 
         <!--If true, the graph edges are drawn as directed arrows, otherwise simple
             lines. -->
-        <drawArrows value="false"/>
+        <drawArrows value="true"/>
 
         <!--Fraction of the old and new zoom values for a zoom step. -->
         <zoomStep value="1.2"/>
@@ -182,22 +182,22 @@
                 value="RandomTime"/>
 
         <!--Default connectivity model used when none is specified -->
-        <defaultConnectivityModel value="UDG"/>
+        <defaultConnectivityModel value="StaticUDG"/>
 
         <!--Default distribution model used when none is specified -->
-        <defaultDistributionModel value="Random"/>
+        <defaultDistributionModel value="Grid2D"/>
 
         <!--Default interference model used when none is specified -->
         <defaultInterferenceModel value="NoInterference"/>
 
         <!--Default mobility model used when none is specified -->
-        <defaultMobilityModel value="RandomDirection"/>
+        <defaultMobilityModel value="NoMobility"/>
 
         <!--Default reliability model used when none is specified -->
         <defaultReliabilityModel value="ReliableDelivery"/>
 
         <!--Default node implementation used when none is specified -->
-        <defaultNodeImplementation value="trab1:SimpleNode"/>
+        <defaultNodeImplementation value="trab1:Node"/>
 
         <!--Show the models implemented by all projects in the drop down options.
             When set to false, only the models by the selected project and the default
@@ -285,28 +285,28 @@
 
         <MessageTransmission constantTime="1"/>
         <RandomMessageTransmission distribution="Uniform"
-                                   min="1" max="5"/>
+                                   min="1" max="3"/>
 
-        <RandomDirection>
-            <NodeSpeed distribution="Gaussian" mean="10" variance="20"/>
-            <WaitingTime distribution="Poisson" lambda="10"/>
-            <MoveTime distribution="Uniform" min="5" max="20"/>
-        </RandomDirection>
+<!--        <RandomDirection>-->
+<!--            <NodeSpeed distribution="Gaussian" mean="10" variance="20"/>-->
+<!--            <WaitingTime distribution="Poisson" lambda="10"/>-->
+<!--            <MoveTime distribution="Uniform" min="5" max="20"/>-->
+<!--        </RandomDirection>-->
 
-        <RandomWayPoint>
-            <Speed distribution="Gaussian" mean="2" variance="3"/>
-            <WaitingTime distribution="Poisson" lambda="10"/>
-        </RandomWayPoint>
+<!--        <RandomWayPoint>-->
+<!--            <Speed distribution="Gaussian" mean="2" variance="3"/>-->
+<!--            <WaitingTime distribution="Poisson" lambda="10"/>-->
+<!--        </RandomWayPoint>-->
 
         <Node defaultSize="1"/>
 
         <Node>
             <numberofdistricts value="5"/>
-            <nodes value="25"/>
+            <nodes value="4"/>
         </Node>
 
-        <QUDG rMin="30" rMax="50" ProbabilityType="constant"
-              connectionProbability="0.6"/>
+<!--        <QUDG rMin="30" rMax="50" ProbabilityType="constant"-->
+<!--              connectionProbability="0.6"/>-->
     </Custom>
 </Document>
 

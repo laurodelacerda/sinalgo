@@ -11,7 +11,7 @@ import java.util.*;
 
 public final class App {
 
-    Timer timer = new Timer();
+    Timer timer;
 
     private Logging logging = Global.getLog();
 
@@ -19,19 +19,19 @@ public final class App {
 
     public static App instance = null;
 
-    public LinkedList<Node> nodes = new LinkedList<>();
+    public List<Node> nodes = null ;
 
     public int relinquish = 0;
 
     public int inquire = 0;
 
-    public int n = 25;
+    public int n;
 
-    public int k ;
+    public int k;
 
-    public int[] enterCS = new int[this.n];
+    public int[] enterCS;
 
-    private Vector<Vector<Integer>> coteries = new Vector<Vector<Integer>>();
+    private Vector<Vector<Integer>> coteries;
 
     public static App start() {
         if (instance == null)
@@ -42,32 +42,41 @@ public final class App {
     public App() {
 
         // Ler quantidade de coteries, k e numero de nós
-        for (int i=0; i < this.n; i++)
+
+        for (int i = 0; i < this.n; i++)
             this.enterCS[i] = 0;
 
-        this.k = (int) Math.sqrt(this.n);
+        // Tamanho de cada coterie
+        this.n = 4;
+        this.k = (int) (2* (Math.sqrt(this.n))) - 1;
+        this.enterCS = new int[this.n];
+
+        timer = new Timer();
+        nodes = new ArrayList<>();
+        coteries = new Vector<>();
 
         this.startMatrix();
-
     }
 
     private void startMatrix() {
         Vector<Vector<Integer>> matrix = new Vector<Vector<Integer>>();
 
+        int side = (int) Math.sqrt(this.n);
+
         // initializing matrix
-        for (int i = 0; i < this.k; i++)
+        for (int i = 0; i < side; i++)
         {
             Vector<Integer> col = new Vector<Integer>();
-            for (int j = 0; j < this.k; j++){
-                col.add(this.k*i + j);
+            for (int j = 0; j < side; j++){
+                col.add(side*i + j);
             }
             matrix.add(col);
         }
 
         for (int i = 0; i < this.n; i++)
         {
-            int l = i / this.k;
-            int c = i % this.k;
+            int l = i / side;
+            int c = i % side;
 
             // add line
             Vector<Integer> lin = matrix.get(l);
@@ -91,17 +100,19 @@ public final class App {
 
         }
 
-        this.printCoteries();
+//        this.printCoteries();
 
     }
 
-    public void init(){
+    public void init() {
 
 //        timer.fire();
 
         //        App app = App.instance;
 //        app.startMatrix();
+        timer.start();
         timer.fire();
+
 //        try {
 //            this.n = Configuration.getIntegerParameter("Node/nodes");
 //            this.k = (int) Math.sqrt(this.n);
@@ -114,7 +125,7 @@ public final class App {
 
     }
 
-    public void printCoteries(){
+    public void printCoteries() {
         System.out.println("--------");
         System.out.println("COTERIES");
         System.out.println("--------");
@@ -128,17 +139,25 @@ public final class App {
 
     }
 
+    public void printCoterie(Node node) {
+        int i = (int) node.getID() - 1;
+        System.out.print("C" + (i + 1) + " =>");
+        for (int j = 0; j < this.coteries.get(i).size(); j++)
+            System.out.print(" " + (this.coteries.get(i).get(j) + 1));
+        System.out.println();
+    }
+
     public List<Node> getCoterie(Node node) {
         int node_id = (int) node.getID() - 1 ;
 
-        List<Node> nodes = new LinkedList<Node>();
+        List<Node> nodes = new ArrayList<>();
         if (this.coteries.get(node_id) != null)
         {
             for (Integer i : this.coteries.get(node_id))
             {
                 for (Node n : this.nodes)
                 {
-                    if ((int) n.getID() == Integer.valueOf(i))
+                    if ((int) n.getID() == Integer.valueOf(i) + 1)
                         nodes.add(n);
                 }
             }
@@ -184,4 +203,5 @@ public final class App {
     public void restartTimer() {
         timer.restart();
     }
+
 }

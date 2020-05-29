@@ -1,19 +1,6 @@
-Tarefa Prática com Sinalgo
-Essa tarefa é um warm-up do framework de simulação de algoritmos Sinalgo (https://sinalgo.github.io/tutorial/Documentation.html),
-usado no modo síncrono.
-A tarefa consiste em implementar uma coordenação de nós móveis, que se movem de acordo com o modelo Random Waypoint
-(se movem em uma determinada direção aleatória durante X rodadas, param por Y rodadas, e voltam a escolher uma nova direção, etc.),
- e comunicam sua coordenada e a direção atual para os vizinhos através de broadcast em sua área de cobertura de alcance C.
-Nessa movimentação conjunta e paralela dos nós, precisa-se garantir que no máximo um dos nós esteja dentro de uma região crítica.
-
-Esta região é uma circunferência de raio R centrada no meio do domínio de movimentação dos nós. Assim que um nó adentra a região,
-outros nós que estejam na iminência da entrar na região devem parar por T rodadas, e depois retomar o movimento, garantindo assim a exclusão mútua.
-Ou seja, voce tem total liberdade para desenvolver o seu algoritmo de coordenação, que deve ser efetivo e deve gastar o menor número de mensagens.
-
-Em princípio, os nós móveis não devem conhecer de antemão a posição região critica.
-Portanto, use um nó estacionário no centro da mesma que fica difundindo continuamente beacons de anúncio de entrada na área critica (com alcance  R).
-
-Parâmetros de teste do seu algoritmo:
-/> relação entre R/C
-/> número de nós
-/> velocidade uniforme v dos nós
+Trabalho Prático T1
+• Testar o algoritmo para 25 e 64 processos, (k= 9 e 15, respectivamente)
+• Os canais de comunicacão entregam mensagens em ordem FIFO, mas podem sofrer atrasos fixos (2 rodadas) com probabilidade PDelay
+• Seja PSC a probabilidade de cada nó requisitar a entrada a seção crítica a cada momento (caso já tenha solicitado e ainda não tenha entrado, a ação é inócua).
+• Então, medir o número de vezes em que RELINQUISH acontece, para duas ou três probabilidades (e.g. PSC = 0.2, PSC = 0.5 e PSC = 0.8)
+• Bonus: comparar com o algoritmo de Sanders com o de Ricart e Agravala

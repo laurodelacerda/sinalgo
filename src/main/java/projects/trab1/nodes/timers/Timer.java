@@ -18,13 +18,12 @@ public class Timer extends sinalgo.nodes.timers.Timer {
 
     private int n = 0;
 
-    public void restart()
-    {
+    public void restart() {
         this.n = 0;
         this.start();
     }
 
-    public void start(){
+    public void start() {
         this.startGlobalTimer(this.interval);
     }
 
@@ -33,9 +32,8 @@ public class Timer extends sinalgo.nodes.timers.Timer {
         List<Node> nodes = new ArrayList<>(App.instance.nodes);
         Collections.shuffle(nodes);
         Random rng = new Random();
-        for (Node node : nodes)
-        {
-            if (rng.nextInt(100) < this.chance){
+        for (Node node : nodes) {
+            if (rng.nextInt(100) < this.chance) {
                 node.tryToEnterTheCS();
             }
         }

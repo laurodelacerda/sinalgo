@@ -28,15 +28,17 @@ public class Node extends sinalgo.nodes.Node {
 
     private PriorityQueue<Require> deferred = new PriorityQueue<Require>(c);
 
-    public void init(){
+    public void init() {
         App.instance.nodes.add(this);
+        this.printCoterie();
     }
 
-    public void handleMessages(Inbox inbox)
-    {
+    public void handleMessages(Inbox inbox) {
+
         if (inbox.hasNext()) {
             Message msg = inbox.next();
-            if (msg instanceof ReqMessage)
+
+            if (msg instanceof Require)
                 handleRequire((Require) msg);
             else if (msg instanceof Release)
                 handleRelease((Node) inbox.getSender());
@@ -49,10 +51,8 @@ public class Node extends sinalgo.nodes.Node {
         }
     }
 
-
     @NodePopupMethod(menuText="Enter CS")
-    public void tryToEnterTheCS()
-    {
+    public void tryToEnterTheCS() {
         if (this.isTryingToEnterTheCS()) {
             return;
         }
@@ -60,24 +60,26 @@ public class Node extends sinalgo.nodes.Node {
         this.ts +=1;
         this.tsCS = this.ts;
         Require m = new Require(this, this.ts);
-        for (Node n: this.getCoterie()){
+        List<Node> coterie = this.getCoterie();
+        for (Node n: coterie){
             this.sendDirect(m, n);
         }
     }
 
-    private void handleRequire(Require m)
-    {
+    private void handleRequire(Require m) { ;
         this.ts = Math.max(this.ts, m.ts) + 1;
         log("received REQ from %d", m.node.getID());
         this.tryToVote(m);
     }
 
-    private void tryToVote(Require m)
-    {
+    private void tryToVote(Require m) {
         if (this.hasVoted()) {
             this.deferred.add(m);
             log("BUT already voted");
-            if (this.c.compare(m, this.candidate) == -1 && !this.hasInquired) {
+            int result = (this.c.compare(m, this.candidate));
+            log("Result: " + m.ts + " - " + this.candidate.ts + " = " + (result));
+//            boolean arbitrary = m.node.getID() > this.candidate.node.getID() // Critério arbitrário
+            if ((result <= 0) && !this.hasInquired) {
                 Inquire inquire = new Inquire(this, this.candidate.ts);
                 this.sendDirect(inquire, this.candidate.node);
                 this.hasInquired = true;
@@ -88,8 +90,7 @@ public class Node extends sinalgo.nodes.Node {
         }
     }
 
-    private void handleYes(Node sender)
-    {
+    private void handleYes(Node sender) {
         log("received YES from %d", sender.getID());
         this.yes +=1;
         if(this.yes == App.instance.k)
@@ -108,7 +109,7 @@ public class Node extends sinalgo.nodes.Node {
         }
     }
 
-    private void handleRelease(Node sender){
+    private void handleRelease(Node sender) {
         log("receive RELEASE from %d", sender.getID());
         Require deferred = this.deferred.poll();
         if (deferred != null){
@@ -119,8 +120,7 @@ public class Node extends sinalgo.nodes.Node {
         this.hasInquired = false;
     }
 
-    private void handleInquire(Inquire m)
-    {
+    private void handleInquire(Inquire m) {
         int senderID = (int) m.node.getID();
         log("received INQ from %d (%d ?= %d)", senderID, this.tsCS, m.ts);
         App.instance.inquire += 1;
@@ -132,8 +132,7 @@ public class Node extends sinalgo.nodes.Node {
         }
     }
 
-    private void handleRelinquish()
-    {
+    private void handleRelinquish() {
         log("-----------------------");
         log("received RELINQUISH");
         App.instance.relinquish +=1;
@@ -155,11 +154,11 @@ public class Node extends sinalgo.nodes.Node {
         }
     }
 
-    private void resetVote(){
+    private void resetVote() {
         this.candidate = null;
     }
 
-    private boolean hasVoted(){
+    private boolean hasVoted() {
         return this.candidate != null;
     }
 
@@ -167,16 +166,20 @@ public class Node extends sinalgo.nodes.Node {
         return this.tsCS >= 0;
     }
 
-    private List<Node> getCoterie(){
+    private List<Node> getCoterie() {
         if (this.coterie == null){
             this.coterie = App.instance.getCoterie(this);
         }
         return this.coterie;
     }
 
+    @NodePopupMethod(menuText = "Print coterie")
+    public void printCoterie() {
+        App.instance.printCoterie(this);
+    }
 
     @NodePopupMethod(menuText="Print vote")
-    public void printVote(){
+    public void printVote() {
         if (this.hasVoted())
         {
             String s = "voted for %d at timestamp %d (timestamp CS is %d)";
@@ -186,12 +189,10 @@ public class Node extends sinalgo.nodes.Node {
         }
     }
 
-
-    public void log(String format, Object... args){
+    public void log(String format, Object... args) {
         String s = String.format("NODE %d => TS %d => ", this.getID(), this.ts);
         App.instance.log(s + format, args);
     }
-
 
     public void checkRequirements(){}
     public void preStep(){}
