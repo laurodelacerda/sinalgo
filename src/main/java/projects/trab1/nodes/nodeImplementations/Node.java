@@ -35,9 +35,10 @@ public class Node extends sinalgo.nodes.Node {
 
     public void handleMessages(Inbox inbox) {
 
-        if (inbox.hasNext()) {
-            Message msg = inbox.next();
+//        if (inbox.hasNext()) {
+//            Message msg = inbox.next();
 
+        for (Message msg : inbox) {
             if (msg instanceof Require)
                 handleRequire((Require) msg);
             else if (msg instanceof Release)
@@ -78,12 +79,23 @@ public class Node extends sinalgo.nodes.Node {
             log("BUT already voted");
             int result = (this.c.compare(m, this.candidate));
             log("Result: " + m.ts + " - " + this.candidate.ts + " = " + (result));
-//            boolean arbitrary = m.node.getID() > this.candidate.node.getID() // Critério arbitrário
+
+//            if (result < 0) { // default mode
             if ((result <= 0) && !this.hasInquired) {
-                Inquire inquire = new Inquire(this, this.candidate.ts);
-                this.sendDirect(inquire, this.candidate.node);
-                this.hasInquired = true;
-                log("sent INQ to %d", this.candidate.node.getID());
+
+                boolean arbitrary = true;
+                if (result == 0) {
+                    arbitrary = m.node.getID() < this.candidate.node.getID(); // Critério arbitrário: desempata para o menor node id
+                    log("[TIE BREAK] " + arbitrary);
+                }
+
+                if (arbitrary) {
+                    Inquire inquire = new Inquire(this, this.candidate.ts);
+                    this.sendDirect(inquire, this.candidate.node);
+                    this.hasInquired = true;
+                    log("sent INQ to %d", this.candidate.node.getID());
+                }
+
             }
         } else {
             this.vote(m);
@@ -103,7 +115,7 @@ public class Node extends sinalgo.nodes.Node {
                 this.sendDirect(new Release(), node);
                 ids.add(Long.toString(node.getID()));
             }
-            this.handleRelease(this);
+//            this.handleRelease(this);
             log("ENTERED (AND LEFT) THE CRITICAL REGION");
             log("sent RELEASE to (%s)", String.join(",", ids));
         }
@@ -136,8 +148,10 @@ public class Node extends sinalgo.nodes.Node {
         log("-----------------------");
         log("received RELINQUISH");
         App.instance.relinquish +=1;
-        this.deferred.add(this.candidate);
-        this.vote(this.deferred.poll());
+        if (this.candidate != null) {
+            this.deferred.add(this.candidate);
+            this.vote(this.deferred.poll());
+        }
         this.hasInquired = false;
     }
 
@@ -176,6 +190,18 @@ public class Node extends sinalgo.nodes.Node {
     @NodePopupMethod(menuText = "Print coterie")
     public void printCoterie() {
         App.instance.printCoterie(this);
+    }
+
+    @NodePopupMethod(menuText = "Print status")
+    public void printStatus() {
+
+        String s = "";
+        for (Require r : this.deferred)
+            s += " " + r.node.getID() + ":" + r.ts;
+
+        boolean cs = this.isTryingToEnterTheCS();
+
+        log("trying: " + String.valueOf(cs) + " | tsCS:" + this.tsCS +  " | votes: " + this.yes + " | waiting: " + s);
     }
 
     @NodePopupMethod(menuText="Print vote")

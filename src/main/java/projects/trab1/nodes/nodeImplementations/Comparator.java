@@ -7,6 +7,7 @@ public class Comparator implements java.util.Comparator<Require> {
 
 
     public int compare(Require m, Require candidate) {
-        return (m.ts - candidate.ts);
+        int result = Integer.compare(m.ts, candidate.ts);
+        return result == 0? Long.compare(m.node.getID(), candidate.node.getID()) : result;
     }
 }

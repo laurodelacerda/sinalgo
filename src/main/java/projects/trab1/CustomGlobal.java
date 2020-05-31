@@ -24,6 +24,9 @@ public class CustomGlobal extends AbstractCustomGlobal {
         App.instance.printStats();
     }
 
+    @CustomButton(buttonText = "Print Status", toolTipText = "")
+    public void printStatus() { App.instance.printStatus(); }
+
     @CustomButton(buttonText = "Toggle Log", toolTipText = "")
     public void toggleLog(){
         App.instance.toggleLog();

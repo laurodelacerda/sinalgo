@@ -55,6 +55,9 @@ public final class App {
         nodes = new ArrayList<>();
         coteries = new Vector<>();
 
+        System.out.println("Nodes: " + this.n);
+        System.out.println("k: " + this.k);
+
         this.startMatrix();
     }
 
@@ -189,6 +192,11 @@ public final class App {
             System.out.print("NODE " + (i + 1));
             System.out.println(" entered the CS " + this.enterCS[i] + " times");
         }
+    }
+
+    public void printStatus() {
+        for (Node node : this.nodes)
+            node.printStatus();
     }
 
     public void toggleLog(){
