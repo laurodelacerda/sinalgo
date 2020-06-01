@@ -2,44 +2,61 @@
 package projects.trab1;
 
 import sinalgo.runtime.AbstractCustomGlobal;
+import sinalgo.runtime.Global;
 
 public class CustomGlobal extends AbstractCustomGlobal {
 
     public void onExit(){
-        App.instance.printStats();
+        Control.instance.printStats();
     }
 
-    @CustomButton(buttonText = "Print Coteries", toolTipText = "Print all coteries.")
+    @CustomButton(buttonText = "Districts", toolTipText = "Print all coteries.")
     public void printCoteries(){
-        App.instance.printCoteries();
+        Control.instance.printDistricts();
     }
 
-    @CustomButton(buttonText = "Print Votes", toolTipText = "")
+    @CustomButton(buttonText = "Votes", toolTipText = "")
     public void printVotes(){
-        App.instance.printVotes();
+        Control.instance.printLastVotes();
     }
 
-    @CustomButton(buttonText = "Print Stats", toolTipText = "")
+    @CustomButton(buttonText = "Stats", toolTipText = "")
     public void printStats(){
-        App.instance.printStats();
+        Control.instance.printStats();
     }
 
-    @CustomButton(buttonText = "Print Status", toolTipText = "")
-    public void printStatus() { App.instance.printStatus(); }
+    @CustomButton(buttonText = "Status", toolTipText = "")
+    public void printStatus() { Control.instance.printStatus(); }
 
-    @CustomButton(buttonText = "Toggle Log", toolTipText = "")
+    @CustomButton(buttonText = "Toggle Logging", toolTipText = "")
     public void toggleLog(){
-        App.instance.toggleLog();
+        Control.instance.toggleLog();
     }
 
-    @CustomButton(buttonText = "Restart Timer", toolTipText = "")
-    public void restartTimer(){
-        App.instance.restartTimer();
+    @CustomButton(buttonText = "Show ID", toolTipText = "")
+    public void showID(){
+        Control.instance.showID();
+    }
+
+    @CustomButton(buttonText = "Show CS", toolTipText = "")
+    public void showCS(){
+        Control.instance.showCS();
+    }
+
+    @CustomButton(buttonText = "Show INQ", toolTipText = "")
+    public void showINQ(){
+        Control.instance.showInquires();
+    }
+
+    @CustomButton(buttonText = "Show REL", toolTipText = "")
+    public void showREL(){
+        Control.instance.showRelinquishes();
     }
 
     public void preRun(){
-        App.start();
-        App.instance.init();
+        Global.setAsynchronousMode(false);
+        Control.start();
+        Control.instance.init();
     }
 
     public boolean hasTerminated(){

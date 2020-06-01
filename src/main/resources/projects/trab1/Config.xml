@@ -53,20 +53,19 @@
             otherwise to false. When set to false, concurrent packets are all dropped.
             This flag is only relevant if interference is turned on, and it must be handled
             properly in the used interference model. -->
-        <canReceiveMultiplePacketsInParallel
-                value="true"/>
+        <canReceiveMultiplePacketsInParallel value="true"/>
 
         <!--The default type of edges to be used -->
-        <edgeType value="Edge"/>
+        <edgeType value="sinalgo.nodes.edges.BidirectionalEdge"/>
 
         <!--If set to true, the application exits as soon as the termination criteria
             is met. This flag only affects the GUI mode. -->
-        <exitOnTerminationInGUI value="false"/>
+        <exitOnTerminationInGUI value="true"/>
 
         <!--If set true, in asynchronous mode the connections are initialized before
             the first event executes. Note that this flag is useless in synchronous mode
             as the connections are updated in every step anyway. -->
-        <initializeConnectionsOnStartup value="false"/>
+        <initializeConnectionsOnStartup value="true"/>
 
         <!--Defines how often the GUI is updated. The GUI is redrawn after every
             refreshRate-th round. -->
@@ -137,7 +136,7 @@
 
         <!--If true, the graph edges are drawn as directed arrows, otherwise simple
             lines. -->
-        <drawArrows value="true"/>
+        <drawArrows value="false"/>
 
         <!--Fraction of the old and new zoom values for a zoom step. -->
         <zoomStep value="1.2"/>
@@ -159,7 +158,7 @@
 
         <!--Factor that defines the distance of the observer from the cube when
             useing the perspective view in 3D. Default: 30 -->
-        <perspectiveViewDistance value="30"/>
+        <perspectiveViewDistance value="40"/>
 
         <!--*********************************************************************** -->
         <!-- Background map in 2D -->
@@ -178,8 +177,7 @@
         <!-- Models -->
         <!--*********************************************************************** -->
         <!--The message transmission model used when none is specified -->
-        <defaultMessageTransmissionModel
-                value="RandomTime"/>
+        <defaultMessageTransmissionModel value="RandomTime"/>
 
         <!--Default connectivity model used when none is specified -->
         <defaultConnectivityModel value="StaticUDG"/>
@@ -236,7 +234,7 @@
 
         <!--Indicates whether the edges are drawn in the default draw implementation
             for the graph. -->
-        <drawEdges value="true"/>
+        <drawEdges value="false"/>
 
         <!--Indicates whether the nodes are drawn in the default draw implementation
             for the graph. -->
@@ -267,8 +265,7 @@
         <epsToPdfCommand value="epstopdf %s"/>
 
         <!--Enables the drawing of the bounding box of the deployment to EPS/PDF. -->
-        <epsDrawDeploymentAreaBoundingBox
-                value="true"/>
+        <epsDrawDeploymentAreaBoundingBox value="true"/>
 
         <!--Indicates whether the background in the ps should be white or gray.
             The gray version is easier to understand (especially in 3D) but the white
@@ -284,29 +281,28 @@
         <ExitAfter value="false" rounds="100"/>
 
         <MessageTransmission constantTime="1"/>
-        <RandomMessageTransmission distribution="Uniform"
-                                   min="1" max="3"/>
+        <RandomMessageTransmission distribution="Uniform" min="1" max="3"/>
 
-<!--        <RandomDirection>-->
-<!--            <NodeSpeed distribution="Gaussian" mean="10" variance="20"/>-->
-<!--            <WaitingTime distribution="Poisson" lambda="10"/>-->
-<!--            <MoveTime distribution="Uniform" min="5" max="20"/>-->
-<!--        </RandomDirection>-->
+        <RandomDirection>
+            <NodeSpeed distribution="Gaussian" mean="10" variance="20"/>
+            <WaitingTime distribution="Poisson" lambda="10"/>
+            <MoveTime distribution="Uniform" min="5" max="20"/>
+        </RandomDirection>
 
-<!--        <RandomWayPoint>-->
-<!--            <Speed distribution="Gaussian" mean="2" variance="3"/>-->
-<!--            <WaitingTime distribution="Poisson" lambda="10"/>-->
-<!--        </RandomWayPoint>-->
+        <RandomWayPoint>
+            <Speed distribution="Gaussian" mean="2" variance="3"/>
+            <WaitingTime distribution="Poisson" lambda="10"/>
+        </RandomWayPoint>
 
-        <Node defaultSize="1"/>
+        <Node defaultSize="50"/>
 
         <Node>
             <numberofdistricts value="5"/>
             <nodes value="4"/>
         </Node>
 
-<!--        <QUDG rMin="30" rMax="50" ProbabilityType="constant"-->
-<!--              connectionProbability="0.6"/>-->
+        <QUDG rMin="30" rMax="50" ProbabilityType="constant"
+              connectionProbability="0.6"/>
     </Custom>
 </Document>
 

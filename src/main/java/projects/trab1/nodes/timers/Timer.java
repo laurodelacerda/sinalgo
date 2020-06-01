@@ -1,7 +1,7 @@
 
 package projects.trab1.nodes.timers;
 
-import projects.trab1.App;
+import projects.trab1.Control;
 import projects.trab1.nodes.nodeImplementations.Node;
 
 import java.util.ArrayList;
@@ -12,11 +12,11 @@ import java.util.Random;
 
 public class Timer extends sinalgo.nodes.timers.Timer {
 
-    private int chance = 20;
-    private double interval = 1;
-    private int limit = 100000;
-
+    private Random rng = new Random();
     private int n = 0;
+    private int psc = 20;
+    private int limit = 1000000;
+
 
     public void restart() {
         this.n = 0;
@@ -24,21 +24,28 @@ public class Timer extends sinalgo.nodes.timers.Timer {
     }
 
     public void start() {
-        this.startGlobalTimer(this.interval);
+        this.startGlobalTimer(1);
     }
 
     @Override
     public void fire() {
-        List<Node> nodes = new ArrayList<>(App.instance.nodes);
+        List<Node> nodes = new ArrayList<>(Control.instance.nodes);
         Collections.shuffle(nodes);
-        Random rng = new Random();
+
         for (Node node : nodes) {
-            if (rng.nextInt(100) < this.chance) {
-                node.tryToEnterTheCS();
+
+            if (node.wait_time == 0) {
+                if (this.rng.nextInt(100) < this.psc)
+                    node.tryToEnterTheCS();
+                else
+                    node.wait_time = 10;
             }
+            else
+                node.wait_time -= 1;
         }
-        if (this.n++ < this.limit) {
+
+        if (this.n++ < this.limit)
             this.start();
-        }
+
     }
 }

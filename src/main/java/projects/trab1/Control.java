@@ -9,37 +9,31 @@ import java.util.*;
 
 //import sinalgo.configuration.Configuration;
 
-public final class App {
-
-    Timer timer;
+public final class Control {
 
     private Logging logging = Global.getLog();
+    private boolean logActive = true;
 
-    private boolean shouldLog = true;
+    public Timer timer;
 
-    public static App instance = null;
-
+    public static Control instance = null;
+    private Vector<Vector<Integer>> districts;
     public List<Node> nodes = null ;
-
+    public int[] enterCS;
+    
     public int relinquish = 0;
-
     public int inquire = 0;
-
+    public int tie_breaks = 0;
     public int n;
-
     public int k;
 
-    public int[] enterCS;
-
-    private Vector<Vector<Integer>> coteries;
-
-    public static App start() {
+    public static Control start() {
         if (instance == null)
-            instance = new App();
+            instance = new Control();
         return instance;
     }
 
-    public App() {
+    public Control() {
 
         // Ler quantidade de coteries, k e numero de nós
 
@@ -51,9 +45,9 @@ public final class App {
         this.k = (int) (2* (Math.sqrt(this.n))) - 1;
         this.enterCS = new int[this.n];
 
-        timer = new Timer();
-        nodes = new ArrayList<>();
-        coteries = new Vector<>();
+        this.timer = new Timer();
+        this.nodes = new ArrayList<>();
+        this.districts = new Vector<>();
 
         System.out.println("Nodes: " + this.n);
         System.out.println("k: " + this.k);
@@ -99,64 +93,40 @@ public final class App {
             district.addAll(lin);
             district.addAll(set_col);
 
-            this.coteries.add(district);
+            this.districts.add(district);
 
         }
-
-//        this.printCoteries();
 
     }
 
     public void init() {
 
-//        timer.fire();
-
-        //        App app = App.instance;
-//        app.startMatrix();
-        timer.start();
-        timer.fire();
-
-//        try {
-//            this.n = Configuration.getIntegerParameter("Node/nodes");
-//            this.k = (int) Math.sqrt(this.n);
-//            App.start();
-//            timer.fire();
-//        }
-//        catch (CorruptConfigurationEntryException e) {
-//            throw new SinalgoFatalException(e.getMessage());
-//        }
+        this.timer.start();
+        this.timer.fire();
 
     }
 
-    public void printCoteries() {
-        System.out.println("--------");
-        System.out.println("COTERIES");
-        System.out.println("--------");
+    public void printDistricts() {
+        System.out.println("\n### DISTRICTS ###");
 
-        for (int i = 0; i < this.n; i++) {
-            System.out.print("C" + (i + 1) + " => ");
-            for (int j = 0; j < this.coteries.get(i).size(); j++)
-                System.out.print(" " + (this.coteries.get(i).get(j) + 1));
-            System.out.println();
-        }
-
+        for (Node n : this.nodes)
+            this.printDistrict(n);
     }
 
-    public void printCoterie(Node node) {
+    public void printDistrict(Node node) {
         int i = (int) node.getID() - 1;
-        System.out.print("C" + (i + 1) + " =>");
-        for (int j = 0; j < this.coteries.get(i).size(); j++)
-            System.out.print(" " + (this.coteries.get(i).get(j) + 1));
-        System.out.println();
+        System.out.print("\nD" + (i + 1) + ": ");
+        for (int j = 0; j < this.districts.get(i).size(); j++)
+            System.out.print(" " + (this.districts.get(i).get(j) + 1));
     }
 
-    public List<Node> getCoterie(Node node) {
+    public List<Node> getDistrict(Node node) {
         int node_id = (int) node.getID() - 1 ;
 
         List<Node> nodes = new ArrayList<>();
-        if (this.coteries.get(node_id) != null)
+        if (this.districts.get(node_id) != null)
         {
-            for (Integer i : this.coteries.get(node_id))
+            for (Integer i : this.districts.get(node_id))
             {
                 for (Node n : this.nodes)
                 {
@@ -167,31 +137,26 @@ public final class App {
         }
 
         return nodes;
-//        return this.coteries.get((int) node.getID() - 1);
     }
 
-    public void printVotes(){
-        System.out.println("-----");
-        System.out.println("VOTES");
-        System.out.println("-----");
-        boolean temp = this.shouldLog;
+    public void printLastVotes(){
+        System.out.println("\n### LAST VOTES ###\n");
+
+        boolean temp = this.logActive;
         for (Node node: this.nodes){
-            node.printVote();
+            node.printLastVote();
         }
-        this.shouldLog = temp;
+        this.logActive = temp;
     }
 
     public void printStats(){
-        System.out.println("-----");
-        System.out.println("STATS");
-        System.out.println("-----");
+        System.out.println("\n### STATISTICS ###\n");
+        System.out.println("Tie breaks:\t" + this.tie_breaks);
         System.out.println("Relinquish:\t" + this.relinquish);
         System.out.println("Inquire:\t" + this.inquire);
 
-        for (int i = 0; i < this.n; i++) {
-            System.out.print("NODE " + (i + 1));
-            System.out.println(" entered the CS " + this.enterCS[i] + " times");
-        }
+        for (int i = 0; i < this.n; i++)
+            System.out.println("NODE " + (i + 1) + " accessed CS " + this.enterCS[i] + " times");
     }
 
     public void printStatus() {
@@ -200,16 +165,32 @@ public final class App {
     }
 
     public void toggleLog(){
-        this.shouldLog = !this.shouldLog;
+        this.logActive = !this.logActive;
     }
 
     public void log(String format, Object[] args){
-        if (this.shouldLog)
+        if (this.logActive)
             this.logging.logln(String.format(format, args));
     };
 
-    public void restartTimer() {
-        timer.restart();
+    public void showID() {
+        for (Node n : this.nodes)
+            n.value_to_inspect = 0;
+    }
+
+    public void showCS() {
+        for (Node n : this.nodes)
+            n.value_to_inspect = 1;
+    }
+
+    public void showInquires() {
+        for (Node n : this.nodes)
+            n.value_to_inspect = 2;
+    }
+
+    public void showRelinquishes() {
+        for (Node n : this.nodes)
+            n.value_to_inspect = 3;
     }
 
 }

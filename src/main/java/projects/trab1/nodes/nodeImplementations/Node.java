@@ -1,10 +1,12 @@
 package projects.trab1.nodes.nodeImplementations;
 
-import projects.trab1.App;
+import projects.trab1.Control;
 import projects.trab1.nodes.messages.*;
+import sinalgo.gui.transformation.PositionTransformation;
 import sinalgo.nodes.messages.Inbox;
 import sinalgo.nodes.messages.Message;
 
+import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.PriorityQueue;
@@ -12,33 +14,33 @@ import java.util.PriorityQueue;
 
 public class Node extends sinalgo.nodes.Node {
 
-    private List<Node> coterie;
+    private List<Node> my_district;
 
     private int ts = 0;
-
     private int tsCS = -1;
+    private int yes = 0;
+    public int wait_time = 0;
+    public int value_to_inspect = 0;
+    public int inquiries = 0;
+    public int relinquishes = 0;
 
     private Require candidate;
-
-    private int yes = 0;
-
     private boolean hasInquired = false;
+    private boolean inCS = false;
 
     private Comparator c = new Comparator(); // comparator for requires
-
     private PriorityQueue<Require> deferred = new PriorityQueue<Require>(c);
 
     public void init() {
-        App.instance.nodes.add(this);
-        this.printCoterie();
+        Control.instance.nodes.add(this);
+        this.printDistrict();
     }
 
     public void handleMessages(Inbox inbox) {
 
-//        if (inbox.hasNext()) {
-//            Message msg = inbox.next();
+        while (inbox.hasNext()) {
+            Message msg = inbox.next();
 
-        for (Message msg : inbox) {
             if (msg instanceof Require)
                 handleRequire((Require) msg);
             else if (msg instanceof Release)
@@ -52,49 +54,41 @@ public class Node extends sinalgo.nodes.Node {
         }
     }
 
-    @NodePopupMethod(menuText="Enter CS")
     public void tryToEnterTheCS() {
         if (this.isTryingToEnterTheCS()) {
             return;
         }
-        log("trying to enter the CS", this.getID());
+
         this.ts +=1;
         this.tsCS = this.ts;
         Require m = new Require(this, this.ts);
-        List<Node> coterie = this.getCoterie();
-        for (Node n: coterie){
+        List<Node> district = this.getDistrict();
+
+        log("sending REQUEST to district");
+        for (Node n: district)
             this.sendDirect(m, n);
-        }
+
     }
 
     private void handleRequire(Require m) { ;
         this.ts = Math.max(this.ts, m.ts) + 1;
-        log("received REQ from %d", m.node.getID());
+        log("got REQUIRE from %d", m.node.getID());
         this.tryToVote(m);
     }
 
     private void tryToVote(Require m) {
         if (this.hasVoted()) {
             this.deferred.add(m);
-            log("BUT already voted");
-            int result = (this.c.compare(m, this.candidate));
-            log("Result: " + m.ts + " - " + this.candidate.ts + " = " + (result));
 
-//            if (result < 0) { // default mode
+            int result = this.c.compare(m, this.candidate);
+            log("Comparing timestamp: " + m.ts + " - " + this.candidate.ts + " = " + (result));
+
             if ((result <= 0) && !this.hasInquired) {
 
-                boolean arbitrary = true;
-                if (result == 0) {
-                    arbitrary = m.node.getID() < this.candidate.node.getID(); // Critério arbitrário: desempata para o menor node id
-                    log("[TIE BREAK] " + arbitrary);
-                }
-
-                if (arbitrary) {
-                    Inquire inquire = new Inquire(this, this.candidate.ts);
-                    this.sendDirect(inquire, this.candidate.node);
-                    this.hasInquired = true;
-                    log("sent INQ to %d", this.candidate.node.getID());
-                }
+                Inquire inquire = new Inquire(this, this.candidate.ts);
+                this.sendDirect(inquire, this.candidate.node);
+                this.hasInquired = true;
+                log("sending INQUIRE to %d", this.candidate.node.getID());
 
             }
         } else {
@@ -105,49 +99,60 @@ public class Node extends sinalgo.nodes.Node {
     private void handleYes(Node sender) {
         log("received YES from %d", sender.getID());
         this.yes +=1;
-        if(this.yes == App.instance.k)
+        if(this.yes == Control.instance.k)
         {
-            App.instance.enterCS[(int) this.getID()-1] += 1;
-            List<String> ids = new ArrayList<String>();
+            log("ACCESSING CS");
+            this.inCS = true;
+
+            Control.instance.enterCS[(int) this.getID()-1] += 1;
             this.tsCS = -1;
-            this.yes = 0;
-            for (Node node : this.getCoterie()){
+            this.yes  = 0;
+
+            List<String> district = new ArrayList<String>();
+            for (Node node : this.getDistrict()) {
                 this.sendDirect(new Release(), node);
-                ids.add(Long.toString(node.getID()));
+                district.add(Long.toString(node.getID()));
             }
-//            this.handleRelease(this);
-            log("ENTERED (AND LEFT) THE CRITICAL REGION");
-            log("sent RELEASE to (%s)", String.join(",", ids));
+
+            log(String.format("sending RELEASE to district [%s]", String.join(", ", district)));
+            this.inCS = false;
         }
     }
 
     private void handleRelease(Node sender) {
-        log("receive RELEASE from %d", sender.getID());
+        log("received RELEASE from %d", sender.getID());
+
         Require deferred = this.deferred.poll();
-        if (deferred != null){
+
+        if (deferred != null)
             this.vote(deferred);
-        } else {
+        else
             this.resetVote();
-        }
+
         this.hasInquired = false;
     }
 
     private void handleInquire(Inquire m) {
+        Control.instance.inquire += 1;
+        this.inquiries += 1;
+
         int senderID = (int) m.node.getID();
-        log("received INQ from %d (%d ?= %d)", senderID, this.tsCS, m.ts);
-        App.instance.inquire += 1;
+        log("received INQUIRE from %d", senderID, this.tsCS, m.ts);
+
         if (this.tsCS == m.ts)
         {
-            log("sent RELINQUISH to %d", senderID);
+            log("sending RELINQUISH to %d", senderID);
             this.sendDirect(new Relinquish(), m.node);
             this.yes -= 1;
         }
     }
 
     private void handleRelinquish() {
-        log("-----------------------");
+        Control.instance.relinquish +=1;
+        this.relinquishes +=1;
+
         log("received RELINQUISH");
-        App.instance.relinquish +=1;
+
         if (this.candidate != null) {
             this.deferred.add(this.candidate);
             this.vote(this.deferred.poll());
@@ -158,14 +163,12 @@ public class Node extends sinalgo.nodes.Node {
     private void vote(Require m) {
         this.candidate = (Require) m.clone();
         boolean same = m.node.getID() == this.getID();
-        if (same) {
-            log("vote for itself");
+        log("sending YES to %d",  this.candidate.node.getID());
+
+        if (same)
             this.handleYes(this);
-        }
-        else {
+        else
             this.sendDirect(new Yes(), this.candidate.node);
-            log("sent YES to %d", this.candidate.node.getID());
-        }
     }
 
     private void resetVote() {
@@ -180,16 +183,16 @@ public class Node extends sinalgo.nodes.Node {
         return this.tsCS >= 0;
     }
 
-    private List<Node> getCoterie() {
-        if (this.coterie == null){
-            this.coterie = App.instance.getCoterie(this);
+    private List<Node> getDistrict() {
+        if (this.my_district == null){
+            this.my_district = Control.instance.getDistrict(this);
         }
-        return this.coterie;
+        return this.my_district;
     }
 
-    @NodePopupMethod(menuText = "Print coterie")
-    public void printCoterie() {
-        App.instance.printCoterie(this);
+    @NodePopupMethod(menuText = "Print district")
+    public void printDistrict() {
+        Control.instance.printDistrict(this);
     }
 
     @NodePopupMethod(menuText = "Print status")
@@ -204,20 +207,47 @@ public class Node extends sinalgo.nodes.Node {
         log("trying: " + String.valueOf(cs) + " | tsCS:" + this.tsCS +  " | votes: " + this.yes + " | waiting: " + s);
     }
 
-    @NodePopupMethod(menuText="Print vote")
-    public void printVote() {
+    @NodePopupMethod(menuText="Last vote")
+    public void printLastVote() {
         if (this.hasVoted())
         {
-            String s = "voted for %d at timestamp %d (timestamp CS is %d)";
-            log(s, this.candidate.node.getID(), this.candidate.ts, this.tsCS);
-        } else {
-            log("has not voted");
+            String s = String.format("%d [ts %d] (ts_cs: %d)", this.candidate.node.getID(), this.candidate.ts, this.tsCS) ;
+            log(s);
         }
+        else
+            log("no votes");
     }
 
     public void log(String format, Object... args) {
-        String s = String.format("NODE %d => TS %d => ", this.getID(), this.ts);
-        App.instance.log(s + format, args);
+        String s = String.format("NODE %d [ts %d]: ", this.getID(), this.ts);
+        Control.instance.log(s + format, args);
+    }
+
+    @Override
+    public void draw(Graphics g, PositionTransformation pt, boolean highlight)
+    {
+        if (this.inCS)
+            this.setColor(new Color(0, 128, 0));
+        else
+            this.setColor(new Color(0, 0, 0));
+
+        int value = -1;
+
+        if (this.value_to_inspect == 0) // id
+            value = (int) this.getID();
+
+        if (this.value_to_inspect == 1) // cs
+            value = (int) Control.instance.enterCS[(int) this.getID()-1];
+
+        if (this.value_to_inspect == 2) // inq
+            value = this.inquiries;
+
+        if (this.value_to_inspect == 3) // rel
+            value = this.relinquishes;
+
+
+        String text = String.valueOf(value);
+        super.drawNodeAsDiskWithText(g, pt, highlight, text,12, Color.WHITE);
     }
 
     public void checkRequirements(){}
