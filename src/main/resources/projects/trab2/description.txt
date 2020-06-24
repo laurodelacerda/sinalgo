@@ -1,0 +1,6 @@
+Trabalho Prático T1
+• Testar o algoritmo para 25 e 64 processos, (k= 9 e 15, respectivamente)
+• Os canais de comunicacão entregam mensagens em ordem FIFO, mas podem sofrer atrasos fixos (2 rodadas) com probabilidade PDelay
+• Seja PSC a probabilidade de cada nó requisitar a entrada a seção crítica a cada momento (caso já tenha solicitado e ainda não tenha entrado, a ação é inócua).
+• Então, medir o número de vezes em que RELINQUISH acontece, para duas ou três probabilidades (e.g. PSC = 0.2, PSC = 0.5 e PSC = 0.8)
+• Bonus: comparar com o algoritmo de Sanders com o de Ricart e Agravala

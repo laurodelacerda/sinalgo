@@ -1,5 +1,5 @@
 
-package projects.trab1.nodes.timers;
+package projects.trab2.nodes.timers;
 
 import projects.trab1.Control;
 import projects.trab1.nodes.nodeImplementations.Node;
