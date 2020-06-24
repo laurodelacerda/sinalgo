@@ -20,14 +20,14 @@
         <!-- Simulation -->
         <!--*********************************************************************** -->
         <!--Switches between synchronous and asynchronous mode. -->
-        <asynchronousMode value="true"/>
+        <asynchronousMode value="false"/>
 
         <!--If set to true, the runtime obtains for each node a new position from
             the mobility model at the beginning of each round. This flag needs to be
             turned on if the chosen mobility model of any node may change the node's
             position. Set this flag to FALSE for static graphs whose nodes do never change
             their position to increase performance. -->
-        <mobility value="false"/>
+        <mobility value="true"/>
 
         <!--If set to true, the chosen interference model is called at the end
             of every round to test for interferring packets. To increase performance,
@@ -189,7 +189,7 @@
         <defaultInterferenceModel value="NoInterference"/>
 
         <!--Default mobility model used when none is specified -->
-        <defaultMobilityModel value="NoMobility"/>
+        <defaultMobilityModel value="RandomWayPoint"/>
 
         <!--Default reliability model used when none is specified -->
         <defaultReliabilityModel value="ReliableDelivery"/>

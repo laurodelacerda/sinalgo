@@ -1,6 +1,8 @@
-Trabalho Prático T1
-• Testar o algoritmo para 25 e 64 processos, (k= 9 e 15, respectivamente)
-• Os canais de comunicacão entregam mensagens em ordem FIFO, mas podem sofrer atrasos fixos (2 rodadas) com probabilidade PDelay
-• Seja PSC a probabilidade de cada nó requisitar a entrada a seção crítica a cada momento (caso já tenha solicitado e ainda não tenha entrado, a ação é inócua).
-• Então, medir o número de vezes em que RELINQUISH acontece, para duas ou três probabilidades (e.g. PSC = 0.2, PSC = 0.5 e PSC = 0.8)
-• Bonus: comparar com o algoritmo de Sanders com o de Ricart e Agravala
+Trabalho Prático T2
+• Implemente e teste no Sinalgo o Algoritmo do Convite para N nós móveis em uma região 50 x 50 metros. A simulação precisará ser síncrona.
+• Os nós se movem segundo o modelo RandomWaypoint (i.e. escolhem randomicamente direção Φ e distância d = [5,25] e se movem com velocidade constante, e chegando ao destino, esperam um certo período de tempo fixo T, antes de escolherem novamente outro destino)
+• Os radios sem fio tem um alcance de R metros (por exemplo de 15 metros) e permitem comunicação bidirecional.
+• Enquanto se movem, os nós também podem se comunicar.
+• A cada instante, haverá grupos conexos de nós móveis.
+• Os nós se comunicam através de inundação, onde cada hop significa 1 rodada
+• Mostre como a frequência de Merge() e o tempo de convergência do algoritmo de eleição varia com N, T, R.

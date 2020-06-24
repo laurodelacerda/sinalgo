@@ -1,5 +1,5 @@
 
-package projects.trab1;
+package projects.trab2;
 
 import lombok.Getter;
 import lombok.Setter;

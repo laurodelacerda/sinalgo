@@ -1,12 +1,6 @@
 
 package projects.trab2.nodes.timers;
 
-import projects.trab1.Control;
-import projects.trab1.nodes.nodeImplementations.Node;
-
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
 import java.util.Random;
 
 
@@ -29,23 +23,6 @@ public class Timer extends sinalgo.nodes.timers.Timer {
 
     @Override
     public void fire() {
-        List<Node> nodes = new ArrayList<>(Control.instance.nodes);
-        Collections.shuffle(nodes);
-
-        for (Node node : nodes) {
-
-            if (node.wait_time == 0) {
-                if (this.rng.nextInt(100) < this.psc)
-                    node.requestCS();
-                else
-                    node.wait_time = 10;
-            }
-            else
-                node.wait_time -= 1;
-        }
-
-        if (this.n++ < this.limit)
-            this.start();
-
+        this.start();
     }
 }
