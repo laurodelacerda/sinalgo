@@ -26,7 +26,6 @@ public class Node extends sinalgo.nodes.Node {
 
     private Require candidate;
     private boolean hasInquired = false;
-    private boolean inCS = false;
 
     private Comparator c = new Comparator(); // comparator for requires
     private PriorityQueue<Require> deferred = new PriorityQueue<Require>(c);
@@ -54,8 +53,8 @@ public class Node extends sinalgo.nodes.Node {
         }
     }
 
-    public void tryToEnterTheCS() {
-        if (this.isTryingToEnterTheCS()) {
+    public void requestCS() {
+        if (this.hasRequestedCS()) {
             return;
         }
 
@@ -72,17 +71,19 @@ public class Node extends sinalgo.nodes.Node {
 
     private void handleRequire(Require m) { ;
         this.ts = Math.max(this.ts, m.ts) + 1;
-        log("got REQUIRE from %d", m.node.getID());
+        log("received REQUIRE from %d", m.node.getID());
         this.tryToVote(m);
     }
 
     private void tryToVote(Require m) {
+
         if (this.hasVoted()) {
             this.deferred.add(m);
 
-            int result = this.c.compare(m, this.candidate);
-            log("Comparing timestamp: " + m.ts + " - " + this.candidate.ts + " = " + (result));
+            int ts_result = (m.ts - this.candidate.ts);
+            log("Comparing ts: %d (NODE %d) - %d (NODE %d) = %d", m.ts, m.node.getID(), this.candidate.ts, this.candidate.node.getID(), ts_result);
 
+            int result = this.c.compare(m, this.candidate);
             if ((result <= 0) && !this.hasInquired) {
 
                 Inquire inquire = new Inquire(this, this.candidate.ts);
@@ -91,9 +92,9 @@ public class Node extends sinalgo.nodes.Node {
                 log("sending INQUIRE to %d", this.candidate.node.getID());
 
             }
-        } else {
-            this.vote(m);
         }
+        else
+            this.vote(m);
     }
 
     private void handleYes(Node sender) {
@@ -102,7 +103,6 @@ public class Node extends sinalgo.nodes.Node {
         if(this.yes == Control.instance.k)
         {
             log("ACCESSING CS");
-            this.inCS = true;
 
             Control.instance.enterCS[(int) this.getID()-1] += 1;
             this.tsCS = -1;
@@ -115,7 +115,6 @@ public class Node extends sinalgo.nodes.Node {
             }
 
             log(String.format("sending RELEASE to district [%s]", String.join(", ", district)));
-            this.inCS = false;
         }
     }
 
@@ -137,7 +136,7 @@ public class Node extends sinalgo.nodes.Node {
         this.inquiries += 1;
 
         int senderID = (int) m.node.getID();
-        log("received INQUIRE from %d", senderID, this.tsCS, m.ts);
+        log("received INQUIRE from %d", senderID);
 
         if (this.tsCS == m.ts)
         {
@@ -179,7 +178,7 @@ public class Node extends sinalgo.nodes.Node {
         return this.candidate != null;
     }
 
-    private boolean isTryingToEnterTheCS(){
+    private boolean hasRequestedCS(){
         return this.tsCS >= 0;
     }
 
@@ -202,7 +201,7 @@ public class Node extends sinalgo.nodes.Node {
         for (Require r : this.deferred)
             s += " " + r.node.getID() + ":" + r.ts;
 
-        boolean cs = this.isTryingToEnterTheCS();
+        boolean cs = this.hasRequestedCS();
 
         log("trying: " + String.valueOf(cs) + " | tsCS:" + this.tsCS +  " | votes: " + this.yes + " | waiting: " + s);
     }
@@ -226,8 +225,8 @@ public class Node extends sinalgo.nodes.Node {
     @Override
     public void draw(Graphics g, PositionTransformation pt, boolean highlight)
     {
-        if (this.inCS)
-            this.setColor(new Color(0, 128, 0));
+        if (this.hasRequestedCS())
+            this.setColor(new Color(0, 0, 255));
         else
             this.setColor(new Color(0, 0, 0));
 
