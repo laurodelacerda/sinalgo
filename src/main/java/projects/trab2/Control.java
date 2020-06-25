@@ -29,7 +29,7 @@ public final class Control {
     public Control() {
 
         this.timer = new Timer();
-        this.nodes = new ArrayList<>();
+        this.nodes = new ArrayList<Node>();
 
     }
 

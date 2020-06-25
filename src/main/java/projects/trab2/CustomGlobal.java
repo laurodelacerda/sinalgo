@@ -2,7 +2,6 @@
 package projects.trab2;
 
 import sinalgo.runtime.AbstractCustomGlobal;
-import sinalgo.runtime.Global;
 
 public class CustomGlobal extends AbstractCustomGlobal {
 
@@ -28,12 +27,15 @@ public class CustomGlobal extends AbstractCustomGlobal {
         Control.instance.showID();
     }
 
-
+    @Override
     public void preRun(){
-        Global.setAsynchronousMode(false);
+//        Global.setAsynchronousMode(false);
         Control.start();
         Control.instance.init();
     }
+
+    @Override
+    public void postRound(){}
 
     public boolean hasTerminated(){
         return false;
