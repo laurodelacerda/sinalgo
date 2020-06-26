@@ -17,22 +17,32 @@ public class Node extends sinalgo.nodes.Node {
     // consts
     public final double INTENSITY_SIGNAL = 15.0;
     public final int TIMER_AYCOORD = 5;
+    public final int TIMER_AYTHERE = 5;
+
+    public enum States {NORMAL, ELECTION, REORGANIZING} ;
 
     // Definition
-    private int state;                 // {Normal = 0, Election = 1, Reorganizing = 2}
-    private List<Node> my_group;       // conjunto dos membros do próprio grupo
-    private List<Node> union_group;    // conjunto dos membros da união dos grupos
-    private int group_id;              // identificação do grupo, através do par (CoordID, count)
-    private List<Node> others_coord;   // outros coordenadores
+    private States state;
+    private List<Node> my_group;            // conjunto dos membros do próprio grupo
+    private List<Node> union_group;         // conjunto dos membros da união dos grupos
+    private int group_id;                   // identificação do grupo, através do par (CoordID, count)
+    private List<Node> others_coord;        // outros coordenadores
 
+    private DelayTimer dt_coord = new DelayTimer(this, TIMER_AYCOORD);
+
+    private Node coord = null;
+
+    private int count = 0;
 
     public void init() {
+        this.setRadioIntensity(INTENSITY_SIGNAL);
         Control.instance.nodes.add(this);
         this.group_id = (int) this.getID();
-        this.state = 0;
+        this.state = States.NORMAL;
         this.my_group  = new ArrayList<Node>();
         this.union_group  = new ArrayList<Node>();
         this.others_coord = new ArrayList<Node>();
+        this.dt_coord.startRelative(1, this);
     }
 
 
@@ -70,17 +80,30 @@ public class Node extends sinalgo.nodes.Node {
 
     private void handleAYCoord(AYCoord m) { ;
         log("received AYCoord from %d", m.node.getID());
-        send(new Accept(this), m.node, INTENSITY_SIGNAL);
+        if ((this.state == States.NORMAL) && (this.coord == this))
+            send(new AYCoordAnswer(this, true), m.node);
+        else
+            send(new AYCoordAnswer(this, false), m.node);
     }
 
 
     private void handleAYThere(AYThere m) {
         log("received AYThere from %d", m.node.getID());
+        if ((this.group_id == m.group_id) && (this.coord == this) && (this.my_group.contains(m.node)))
+            send(new AYThereAnswer(this, true), m.node);
+        else
+            send(new AYThereAnswer(this, false), m.node);
     }
 
 
     private void handleAccept(Accept m) {
         log("received Accept from %d", m.node.getID());
+        if ((this.state == States.ELECTION) && (this.coord == this) && (this.group_id == m.group_id))
+        {
+            this.union_group.add(m.node);
+            send(new AcceptAnswer(this, true), m.node);
+            
+        }
 
     }
 
@@ -88,31 +111,40 @@ public class Node extends sinalgo.nodes.Node {
     private void handleReady(Ready m) {
         log("received Ready from %d", m.node.getID());
 
+        if ((this.group_id == m.group_id) && (this.state == States.REORGANIZING))
+        {
+            // this.definition = m.definition;
+            this.state = States.NORMAL;
+            send(new ReadyAnswer(this, true, this.group_id), this.coord);
+        }
+        else
+            send(new ReadyAnswer(this, false), m.node);
+
     }
 
 
     private void handleInvitation(Invitation m) {
 
-        if (this.iAmCoord()) {
-            for (Node n: my_group)
-                send(new Invitation(this, m.sender), n, INTENSITY_SIGNAL);
-            send(new Accept(this), m.sender, INTENSITY_SIGNAL);
-        }
-        else
-            send(new Accept(this), m.new_coord, INTENSITY_SIGNAL);
+//        if (this.iAmCoord()) {
+//            for (Node n: my_group)
+//                send(new Invitation(this, m.sender), n);
+//            send(new Accept(this), m.sender);
+//        }
+//        else
+//            send(new Accept(this), m.new_coord);
 
-        this.state = 2;
+        this.state = States.REORGANIZING;
     }
 
 
     private void handleAcceptAnswer(AcceptAnswer m) {
 
-        this.state = 0;
+        this.state = States.NORMAL;
 
     }
 
     private void handleAYCoordAnswer(AYCoordAnswer m) {
-
+        log("received AYCoordAnswer from %d", m.sender.getID());
     }
 
 
@@ -122,18 +154,14 @@ public class Node extends sinalgo.nodes.Node {
 
     private void handleAYThereAnswer(AYThereAnswer m) {
 
-        this.state = 0;
+        this.state = States.NORMAL;
 
-    }
-
-
-    private void recovery() {
     }
 
 
     private void sendReady() {
-        for (Node n: this.union_group)
-            send(new Ready(this), n, INTENSITY_SIGNAL);
+//        for (Node n: this.union_group)
+//            send(new Ready(this), n);
 
 
     }
@@ -156,31 +184,57 @@ public class Node extends sinalgo.nodes.Node {
     }
 
 
-    public void time_fired() {
-        log("Time has fired!");
+    public void recovery() {
+        log("Started recovery!");
+        this.state = States.ELECTION;
+        this.count += 1;
+        this.group_id = (int) this.getID();
+        this.coord = this;
+        this.union_group.clear();
+        this.state = States.REORGANIZING;
+        // definition = my_appl_state
+        this.state = States.NORMAL;
     }
 
+    public void stop_processing() {
+
+    }
 
     public void check_members() {
 
-        if ((this.iAmCoord()) && (this.state == 0)) {
+        if ((this.iAmCoord()) && (this.state == States.NORMAL)) {
             this.others_coord.clear();
             AYCoord msg = new AYCoord(this);
-            broadcast(msg, INTENSITY_SIGNAL);
-            DelayTimer dt = new DelayTimer(this, msg, TIMER_AYCOORD);
+            broadcast(msg);
+//            DelayTimer dt = new DelayTimer(this, msg, TIMER_AYCOORD);
         }
     }
 
-    public void preStep(){}
+    public void check_coord() {
 
-    public void postStep(){
+        if (this.iAmCoord())
+            return;
 
-        // if Coord, broadcast AYCoord messages
+        AYThere msg = new AYThere(this, this.group_id);
+        send(msg, coord);
+//        DelayTimer dt = new DelayTimer(this, msg, TIMER_AYTHERE);
+
+    }
+
+
+    public void preStep() {}
+
+    public void postStep() {
+
+        // if coord, check other coordinators
         this.check_members();
+
+        // if member, check if coord is alive
+//        this.check_coord();
 
 
     }
 
-    public void checkRequirements(){}
-    public void neighborhoodChange(){}
+    public void checkRequirements() {}
+    public void neighborhoodChange() {}
 }

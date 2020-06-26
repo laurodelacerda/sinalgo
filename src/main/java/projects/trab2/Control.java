@@ -5,7 +5,8 @@ import projects.trab2.nodes.timers.Timer;
 import sinalgo.runtime.Global;
 import sinalgo.tools.logging.Logging;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
 
 // Class stores all statistics from simulation
 public final class Control {
@@ -57,8 +58,10 @@ public final class Control {
     }
 
     public void log(String format, Object[] args){
-        if (this.logActive)
-            this.logging.logln(String.format(format, args));
+        if (this.logActive) {
+            String s = String.format(" [STEP %d]", (int) Global.getCurrentTime());
+            this.logging.logln(String.format(format + s, args));
+        }
     };
 
     public void showID() {

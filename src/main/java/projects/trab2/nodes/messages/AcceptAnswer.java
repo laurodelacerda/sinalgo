@@ -5,11 +5,13 @@ import sinalgo.nodes.messages.Message;
 
 public class AcceptAnswer extends Message {
 
-    public final Node node;
+    public final Node sender;
+    public boolean answer;
 
-    public AcceptAnswer(Node node)
+    public AcceptAnswer(Node sender, boolean answer)
     {
-        this.node = node;
+        this.sender = sender;
+        this.answer = answer;
     }
 
     public Message clone(){

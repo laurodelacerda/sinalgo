@@ -5,11 +5,13 @@ import sinalgo.nodes.messages.Message;
 
 public class AYCoordAnswer extends Message {
 
-    public final Node node;
+    public final Node sender;
+    public boolean answer;
 
-    public AYCoordAnswer(Node node)
+    public AYCoordAnswer(Node sender, boolean answer)
     {
-        this.node = node;
+        this.sender = sender;
+        this.answer = answer;
     }
 
     public Message clone(){

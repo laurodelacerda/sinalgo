@@ -7,9 +7,12 @@ public class Ready extends Message {
 
     public final Node node;
 
-    public Ready(Node node)
+    public int group_id;
+
+    public Ready(Node node, int group_id)
     {
         this.node = node;
+        this.group_id = group_id;
     }
 
     public Message clone(){

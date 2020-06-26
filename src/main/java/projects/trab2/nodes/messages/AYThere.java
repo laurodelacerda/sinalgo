@@ -6,12 +6,12 @@ import sinalgo.nodes.messages.Message;
 public class AYThere extends Message {
 
     public final Node node;
-    public final int ts;
+    public final int group_id;
 
-    public AYThere(Node node, int ts)
+    public AYThere(Node node, int group_id)
     {
         this.node = node;
-        this.ts = ts;
+        this.group_id = group_id;
     }
 
     public Message clone(){

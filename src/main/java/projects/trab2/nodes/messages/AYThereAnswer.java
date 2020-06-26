@@ -6,12 +6,12 @@ import sinalgo.nodes.messages.Message;
 public class AYThereAnswer extends Message {
 
     public final Node node;
-    public final int ts;
+    public final boolean answer;
 
-    public AYThereAnswer(Node node, int ts)
+    public AYThereAnswer(Node node, boolean answer)
     {
         this.node = node;
-        this.ts = ts;
+        this.answer = answer;
     }
 
     public Message clone(){
