@@ -9,7 +9,7 @@ import sinalgo.nodes.timers.Timer;
 @Setter
 public class DelayTimer extends Timer {
 
-    public enum Timers {AYCOORD, AYTHERE, MERGE, READY, ACCEPT};
+    public enum Timers {AYCOORD, AYTHERE, MERGE, READY, ACCEPT, PRIORITY};
 
     private int timeout;
     private Node node;
@@ -38,10 +38,9 @@ public class DelayTimer extends Timer {
 
         if (this.isEnabled()) {
             this.node.log(String.format("has waited for %d steps", this.timeout));
+            this.node.handleTimers(this.timer);
             this.enabled = false;
         }
-
-        this.node.handleTimers(this.timer);
 
     }
 

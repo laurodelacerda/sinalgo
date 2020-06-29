@@ -5,12 +5,12 @@ import sinalgo.nodes.messages.Message;
 
 public class AYThereAnswer extends Message {
 
-    public final Node node;
+    public final Node sender;
     public final boolean answer;
 
     public AYThereAnswer(Node node, boolean answer)
     {
-        this.node = node;
+        this.sender = node;
         this.answer = answer;
     }
 
