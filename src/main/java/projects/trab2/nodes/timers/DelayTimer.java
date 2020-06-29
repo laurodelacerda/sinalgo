@@ -9,19 +9,27 @@ import sinalgo.nodes.timers.Timer;
 @Setter
 public class DelayTimer extends Timer {
 
+    public enum Timers {AYCOORD, AYTHERE, MERGE, READY, ACCEPT};
+
     private int timeout;
     private Node node;
-//    private Message msg;
-    private boolean enabled = true;
+    private boolean enabled = false;
     private boolean msg_arrived = false;
-
-    public void disable() {
+    private Timers timer;
+    public void deactivate() {
         this.setEnabled(false);
     }
 
-    public DelayTimer(Node node, int timeout) {
+    public void activate() {
+        if (!this.enabled)
+            this.setEnabled(true);
+            this.startRelative(this.timeout, this.node);
+    }
+
+
+    public DelayTimer(Node node, Timers t, int timeout) {
         this.setNode(node);
-//        this.setMsg(msg);
+        this.setTimer(t);
         this.setTimeout(timeout);
     }
 
@@ -29,16 +37,12 @@ public class DelayTimer extends Timer {
     public void fire() {
 
         if (this.isEnabled()) {
-            this.node.log(String.format("waited %d steps", this.timeout));
-            this.startRelative(this.timeout, this.node);
+            this.node.log(String.format("has waited for %d steps", this.timeout));
+            this.enabled = false;
         }
-        else
-        {
-            if (msg_arrived)
-                return;
-            else
-                this.node.recovery();
-        }
+
+        this.node.handleTimers(this.timer);
+
     }
 
 }

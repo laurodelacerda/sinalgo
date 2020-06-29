@@ -2,14 +2,16 @@ package projects.trab2.nodes.nodeImplementations;
 
 import projects.trab2.Control;
 import projects.trab2.nodes.messages.*;
-import projects.trab2.nodes.timers.DelayTimer;
+import projects.trab2.nodes.timers.*;
 import sinalgo.gui.transformation.PositionTransformation;
 import sinalgo.nodes.messages.Inbox;
 import sinalgo.nodes.messages.Message;
 
 import java.awt.*;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 
 public class Node extends sinalgo.nodes.Node {
@@ -18,8 +20,18 @@ public class Node extends sinalgo.nodes.Node {
     public final double INTENSITY_SIGNAL = 15.0;
     public final int TIMER_AYCOORD = 5;
     public final int TIMER_AYTHERE = 5;
+    public final int TIMER_MERGE = 10;
+    public final int TIMER_READY = 10;
+    public final int TIMER_ACCEPT = 10;
 
     public enum States {NORMAL, ELECTION, REORGANIZING} ;
+
+    // timers
+    private DelayTimer timer_aycoord = new DelayTimer(this, DelayTimer.Timers.AYCOORD, TIMER_AYCOORD);
+    private DelayTimer timer_aythere = new DelayTimer(this, DelayTimer.Timers.AYCOORD, TIMER_AYTHERE);
+    private DelayTimer timer_merge   = new DelayTimer(this, DelayTimer.Timers.MERGE, TIMER_MERGE);
+    private DelayTimer timer_ready   = new DelayTimer(this, DelayTimer.Timers.READY, TIMER_READY);
+    private DelayTimer timer_accept  = new DelayTimer(this, DelayTimer.Timers.ACCEPT, TIMER_ACCEPT);
 
     // Definition
     private States state;
@@ -28,11 +40,10 @@ public class Node extends sinalgo.nodes.Node {
     private int group_id;                   // identificação do grupo, através do par (CoordID, count)
     private List<Node> others_coord;        // outros coordenadores
 
-    private DelayTimer dt_coord = new DelayTimer(this, TIMER_AYCOORD);
-
     private Node coord = null;
+    private int counter = 0;
+    private int number_answers_ready = 0;
 
-    private int count = 0;
 
     public void init() {
         this.setRadioIntensity(INTENSITY_SIGNAL);
@@ -42,9 +53,8 @@ public class Node extends sinalgo.nodes.Node {
         this.my_group  = new ArrayList<Node>();
         this.union_group  = new ArrayList<Node>();
         this.others_coord = new ArrayList<Node>();
-        this.dt_coord.startRelative(1, this);
-    }
 
+    }
 
     public void handleMessages(Inbox inbox) {
 
@@ -72,11 +82,35 @@ public class Node extends sinalgo.nodes.Node {
         }
     }
 
+    public void handleTimers(DelayTimer.Timers timer) {
 
-    private boolean iAmCoord() {
-        return this.group_id == (int) this.getID();
+        if (timer == DelayTimer.Timers.AYCOORD)
+        {
+            this.log("finished timer of AYCOORD");
+//            if (this.timer_aycoord.isMsg_arrived()) return;
+//            else this.node.recovery();
+        }
+        else if (timer == DelayTimer.Timers.MERGE) {
+            this.log("finished timer of MERGE");
+            this.state = States.REORGANIZING;
+            this.number_answers_ready = 0;
+            this.timer_ready.activate();
+            for (Node n: this.my_group) send(new Ready(this, this.group_id), n);
+        }
+        else if (timer == DelayTimer.Timers.READY) {
+            this.log("finished timer of READY");
+            if (this.number_answers_ready < this.my_group.size())
+                this.recovery();
+            else
+                this.state = States.NORMAL;
+
+        }
+        else if (timer == DelayTimer.Timers.ACCEPT) {
+            this.recovery();
+
+        }
+
     }
-
 
     private void handleAYCoord(AYCoord m) { ;
         log("received AYCoord from %d", m.node.getID());
@@ -86,7 +120,6 @@ public class Node extends sinalgo.nodes.Node {
             send(new AYCoordAnswer(this, false), m.node);
     }
 
-
     private void handleAYThere(AYThere m) {
         log("received AYThere from %d", m.node.getID());
         if ((this.group_id == m.group_id) && (this.coord == this) && (this.my_group.contains(m.node)))
@@ -95,18 +128,17 @@ public class Node extends sinalgo.nodes.Node {
             send(new AYThereAnswer(this, false), m.node);
     }
 
-
     private void handleAccept(Accept m) {
-        log("received Accept from %d", m.node.getID());
+        log("received Accept from %d", m.sender.getID());
         if ((this.state == States.ELECTION) && (this.coord == this) && (this.group_id == m.group_id))
         {
-            this.union_group.add(m.node);
-            send(new AcceptAnswer(this, true), m.node);
-            
+            this.union_group.add(m.sender);
+            send(new AcceptAnswer(this, true), m.sender);
+
         }
 
-    }
 
+    }
 
     private void handleReady(Ready m) {
         log("received Ready from %d", m.node.getID());
@@ -122,9 +154,27 @@ public class Node extends sinalgo.nodes.Node {
 
     }
 
-
     private void handleInvitation(Invitation m) {
 
+        if (this.state == States.NORMAL) {
+            this.suspend_processing_application();
+            Node old_coord = this.coord;
+            this.my_group = this.union_group;
+            this.state = States.ELECTION;
+            this.coord = m.sender;
+            this.group_id = m.group_id;
+
+            if (old_coord == this) for (Node n : this.my_group) send (m.clone(), n);
+
+            send(new Accept(this, this.group_id), this.coord);
+            this.timer_accept.activate();
+
+
+
+
+
+
+        }
 //        if (this.iAmCoord()) {
 //            for (Node n: my_group)
 //                send(new Invitation(this, m.sender), n);
@@ -136,28 +186,35 @@ public class Node extends sinalgo.nodes.Node {
         this.state = States.REORGANIZING;
     }
 
-
     private void handleAcceptAnswer(AcceptAnswer m) {
 
-        this.state = States.NORMAL;
+        if (this.coord == m.sender)
+            this.state = States.NORMAL;
 
     }
 
     private void handleAYCoordAnswer(AYCoordAnswer m) {
         log("received AYCoordAnswer from %d", m.sender.getID());
+        if (this.iAmCoord())
+        {
+            this.others_coord.add(m.sender);
+        }
     }
-
 
     private void handleReadyAnswer(ReadyAnswer m) {
-    }
 
+        if ((m.accept == true) && (m.group_id == this.group_id))
+        {
+            log("received AYReadyAnswer from %d", m.sender.getID());
+            this.number_answers_ready += 1;
+        }
+    }
 
     private void handleAYThereAnswer(AYThereAnswer m) {
 
         this.state = States.NORMAL;
 
     }
-
 
     private void sendReady() {
 //        for (Node n: this.union_group)
@@ -166,28 +223,14 @@ public class Node extends sinalgo.nodes.Node {
 
     }
 
-    @NodePopupMethod(menuText = "Print status") // Maybe show the coordinator
-    public void printStatus() {
-//        log("trying: " + String.valueOf(cs) + " | tsCS:" + this.tsCS +  " | votes: " + this.yes + " | waiting: " + s);
+    private boolean iAmCoord() {
+        return this.group_id == (int) this.getID();
     }
-
-    public void log(String format, Object... args) {
-        String s = String.format("NODE %d : ", this.getID());
-        Control.instance.log(s + format, args);
-    }
-
-
-    @Override
-    public void draw(Graphics g, PositionTransformation pt, boolean highlight) {
-        String text = String.valueOf(this.getID());
-        super.drawNodeAsDiskWithText(g, pt, highlight, text,12, Color.WHITE);
-    }
-
 
     public void recovery() {
-        log("Started recovery!");
+        log("started recovery");
         this.state = States.ELECTION;
-        this.count += 1;
+        this.counter += 1;
         this.group_id = (int) this.getID();
         this.coord = this;
         this.union_group.clear();
@@ -196,17 +239,14 @@ public class Node extends sinalgo.nodes.Node {
         this.state = States.NORMAL;
     }
 
-    public void stop_processing() {
-
-    }
-
     public void check_members() {
 
-        if ((this.iAmCoord()) && (this.state == States.NORMAL)) {
-            this.others_coord.clear();
+        if ((this.state == States.NORMAL) && (!this.timer_aycoord.isEnabled())) {
             AYCoord msg = new AYCoord(this);
+            this.log("broadcasting AYCOORD");
+            this.others_coord.clear();
             broadcast(msg);
-//            DelayTimer dt = new DelayTimer(this, msg, TIMER_AYCOORD);
+            this.timer_aycoord.activate();
         }
     }
 
@@ -221,20 +261,58 @@ public class Node extends sinalgo.nodes.Node {
 
     }
 
+    public void suspend_processing_application() {
 
-    public void preStep() {}
+    }
+
+    public void merge() {
+
+        if ((this.iAmCoord()) && (this.state == States.NORMAL)) {
+            this.state = States.ELECTION;
+            this.suspend_processing_application();
+            this.counter += 1;
+            this.group_id = (int) this.getID();
+            this.my_group.clear();
+            this.my_group.addAll(this.union_group);
+            this.union_group.clear();
+            this.timer_merge.activate();
+
+            Set<Node> set_nodes = new HashSet<Node>();
+            set_nodes.addAll(this.others_coord);
+            set_nodes.addAll(this.my_group);
+
+            for (Node n: set_nodes) send(new Invitation(this, this.group_id), n);
+
+        }
+    }
 
     public void postStep() {
 
-        // if coord, check other coordinators
-        this.check_members();
-
-        // if member, check if coord is alive
-//        this.check_coord();
+        if (this.iAmCoord()) // if coord, check other coordinators
+            this.check_members();
+        else // if member, check if coord is alive
+            this.check_coord();
 
 
     }
 
+    @NodePopupMethod(menuText = "Print status") // Maybe show the coordinator
+    public void printStatus() {
+//        log("trying: " + String.valueOf(cs) + " | tsCS:" + this.tsCS +  " | votes: " + this.yes + " | waiting: " + s);
+    }
+
+    public void log(String format, Object... args) {
+        String s = String.format("NODE %d : ", this.getID());
+        Control.instance.log(s + format, args);
+    }
+
+    @Override
+    public void draw(Graphics g, PositionTransformation pt, boolean highlight) {
+        String text = String.valueOf(this.getID());
+        super.drawNodeAsDiskWithText(g, pt, highlight, text,12, Color.WHITE);
+    }
+
+    public void preStep() {}
     public void checkRequirements() {}
     public void neighborhoodChange() {}
 }
