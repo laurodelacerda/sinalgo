@@ -2,15 +2,13 @@ package projects.trab2.nodes.nodeImplementations;
 
 import projects.trab2.Control;
 import projects.trab2.nodes.messages.*;
-import projects.trab2.nodes.timers.*;
+import projects.trab2.nodes.timers.DelayTimer;
 import sinalgo.gui.transformation.PositionTransformation;
 import sinalgo.nodes.messages.Inbox;
 import sinalgo.nodes.messages.Message;
 
 import java.awt.*;
-import java.util.ArrayList;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 
 
@@ -19,7 +17,7 @@ public class Node extends sinalgo.nodes.Node {
     // consts
     public final double INTENSITY_SIGNAL = 15.0;
     public final int TIMER_AYCOORD = 25;
-    public final int TIMER_AYTHERE = 5;
+    public final int TIMER_AYTHERE = 25;
     public final int TIMER_MERGE = 10;
     public final int TIMER_READY = 10;
     public final int TIMER_ACCEPT = 10;
@@ -37,9 +35,9 @@ public class Node extends sinalgo.nodes.Node {
 
     // Definition
     private States state;
-    private List<Node> my_group = new ArrayList<Node>();     // conjunto dos membros do próprio grupo
-    private List<Node> union_group = new ArrayList<Node>();  // conjunto dos membros da união dos grupos
-    private List<Node> others_coord = new ArrayList<Node>(); // outros coordenadores
+    private Set<Node> my_group = new HashSet<Node>();     // conjunto dos membros do próprio grupo
+    private Set<Node> union_group = new HashSet<Node>();  // conjunto dos membros da união dos grupos
+    private Set<Node> others_coord = new HashSet<Node>(); // outros coordenadores
 
     private int group_id;                                    // identificação do grupo, através do par (CoordID, count)
     private Node coord;
@@ -86,75 +84,87 @@ public class Node extends sinalgo.nodes.Node {
     public void handleTimers(DelayTimer.Timers timer) {
 
         if (timer == DelayTimer.Timers.AYCOORD) {
-            this.log("finished timer of AYCOORD");
-            if (this.others_coord.isEmpty())
+            log("finished timer of AYCOORD");
+            if (this.others_coord.isEmpty()) {
+                this.timer_aycoord.deactivate();
                 return;
-            else
-            {
-                this.timer_priority.activate();
             }
-//            if (this.timer_aycoord.isMsg_arrived()) return;
-//            else this.node.recovery();
+            else
+                this.timer_priority.activate();
+
         }
         else if (timer == DelayTimer.Timers.AYTHERE) {
-            this.recovery();
+            if (!this.timer_aythere.isMsg_arrived()) {
+                log(String.format("Coordinator %d has not answered in time. Starting Recovery Mode.", this.coord.getID()));
+                this.recovery();
+            }
+            else {
+                this.timer_aythere.deactivate();
+            }
         }
         else if (timer == DelayTimer.Timers.MERGE) {
-            this.log("finished timer of MERGE");
+            log("finished timer of MERGE");
             this.state = States.REORGANIZING;
             this.number_answers_ready = 0;
             this.timer_ready.activate();
-            for (Node n: this.my_group) send(new Ready(this, this.group_id), n);
+            for (Node n: this.union_group) send(new Ready(this, this.group_id), n);
+            this.timer_merge.deactivate();
         }
         else if (timer == DelayTimer.Timers.READY) {
-            this.log("finished timer of READY");
+            log("finished timer of READY");
             if (this.number_answers_ready < this.my_group.size())
                 this.recovery();
             else
                 this.state = States.NORMAL;
-
+            this.timer_ready.deactivate();
         }
         else if (timer == DelayTimer.Timers.ACCEPT) {
             this.recovery();
         }
         else if (timer == DelayTimer.Timers.PRIORITY) {
             this.merge();
+            this.timer_priority.deactivate();
+            this.timer_aycoord.deactivate();
+
         }
 
     }
 
     private void handleAYCoord(AYCoord m) { ;
-        log("received AYCoord from %d", m.node.getID());
-        if ((this.state == States.NORMAL) && (this.coord == this))
-            send(new AYCoordAnswer(this, true), m.node);
-        else
-            send(new AYCoordAnswer(this, false), m.node);
+        log("received AYCoord from %d", m.sender.getID());
+
+        if ((this.state == States.NORMAL) && (this.coord == this)) {
+            send(new AYCoordAnswer(this, true), m.sender);
+            log("sending AYCoordAnswer as TRUE to %d", m.sender.getID());
+        }
+        else {
+            send(new AYCoordAnswer(this, false), m.sender);
+            log("sending AYCoordAnswer as FALSE to %d", m.sender.getID());
+        }
     }
 
     private void handleAYCoordAnswer(AYCoordAnswer m) {
         log("received AYCoordAnswer from %d", m.sender.getID());
-        if (this.iAmCoord())
-        {
+        if (m.answer)
             this.others_coord.add(m.sender);
-//            ?
-//            send(new Invitation(this, this, this.group_id), m.sender);
-            this.merge();
-//            ?
-        }
     }
 
     private void handleAYThere(AYThere m) {
-        log("received AYThere from %d", m.node.getID());
-        if ((this.iAmCoord()) && (this.group_id == m.group_id) && (this.my_group.contains(m.node)))
-            send(new AYThereAnswer(this, true), m.node);
-        else
-            send(new AYThereAnswer(this, false), m.node);
+        log("received AYThere from %d", m.sender.getID());
+        if ((this.iAmCoord()) && (this.group_id == m.group_id) && (this.my_group.contains(m.sender))) {
+            log("sending AYThereAnswer as TRUE to %d", m.sender.getID());
+            send(new AYThereAnswer(this, true), m.sender);
+        }
+        else{
+            log("sending AYThereAnswer as TRUE to %d", m.sender.getID());
+            send(new AYThereAnswer(this, false), m.sender);
+        }
     }
 
     private void handleAYThereAnswer(AYThereAnswer m) {
         log("received AYThereAnswer from %d", m.sender.getID());
         if (this.coord == m.sender)
-            this.timer_aythere.deactivate(); // Coordinator is alive, deactivate timer
+            this.timer_aythere.setMsg_arrived(true); // Coordinator is alive, wait for some time
     }
 
     private void handleInvitation(Invitation m) {
@@ -168,9 +178,12 @@ public class Node extends sinalgo.nodes.Node {
             this.coord = m.sender;
             this.group_id = m.group_id;
 
+            log("relaying Invitation to my_group");
+
             if (old_coord == this)
                 for (Node n : this.my_group) send (new Invitation(this, this.coord, this.group_id), n);
 
+            log("sending Accept to %d", this.coord.getID());
             send(new Accept(this, this.group_id), this.coord);
             this.timer_accept.activate();
 
@@ -192,23 +205,25 @@ public class Node extends sinalgo.nodes.Node {
         {
             this.union_group.add(m.sender);
             send(new AcceptAnswer(this, true), m.sender);
+            log("sending AcceptAnswer as TRUE to %d", m.sender.getID());
         }
-        else
+        else {
             send(new AcceptAnswer(this, false), m.sender);
-
+            log("sending AcceptAnswer as FALSE to %d", m.sender.getID());
+        }
     }
 
     private void handleAcceptAnswer(AcceptAnswer m) {
-
+        log("received AcceptAnswer from %d", m.sender.getID());
+        this.timer_accept.deactivate();
         if (this.coord == m.sender){
             if (m.answer) {
-                this.state = States.NORMAL;
-                this.timer_accept.deactivate();
+                this.state = States.REORGANIZING;
             }
             else {
                 this.recovery();
-//                this.state = States.REORGANIZING;
             }
+
         }
 
     }
@@ -221,17 +236,19 @@ public class Node extends sinalgo.nodes.Node {
             // this.definition = m.definition;
             this.state = States.NORMAL;
             send(new ReadyAnswer(this, true, this.group_id), this.coord);
+            log("sending ReadyAnswer as TRUE to %d", this.coord.getID());
         }
-        else
+        else {
             send(new ReadyAnswer(this, false), m.node);
-
+            log("sending ReadyAnswer as FALSE to %d", m.node.getID());
+        }
     }
 
     private void handleReadyAnswer(ReadyAnswer m) {
 
         if ((m.accept == true) && (m.group_id == this.group_id))
         {
-            log("received AYReadyAnswer from %d", m.sender.getID());
+            log("received ReadyAnswer from %d", m.sender.getID());
             this.number_answers_ready += 1;
         }
     }
@@ -256,7 +273,7 @@ public class Node extends sinalgo.nodes.Node {
     public void check_members() {
 
         if ((this.state == States.NORMAL) && (this.iAmCoord()) && (!this.timer_aycoord.isEnabled())) {
-            this.log("broadcasting AYCOORD");
+            log("broadcasting AYCOORD");
             this.others_coord.clear();
             broadcast(new AYCoord(this));
             this.timer_aycoord.activate();
@@ -265,9 +282,14 @@ public class Node extends sinalgo.nodes.Node {
 
     public void check_coord() {
 
-        AYThere msg = new AYThere(this, this.group_id);
-        send(msg, coord);
-        this.timer_aythere.activate();
+        if ((this.state == States.NORMAL) && (!this.timer_aythere.isEnabled()))
+        {
+            AYThere msg = new AYThere(this, this.group_id);
+            log("sending AYTHERE");
+            send(msg, coord);
+            this.timer_aythere.setMsg_arrived(false);
+            this.timer_aythere.activate();
+        }
     }
 
     public void suspend_processing_application() {
@@ -277,6 +299,7 @@ public class Node extends sinalgo.nodes.Node {
     public void merge() {
 
         if ((this.iAmCoord()) && (this.state == States.NORMAL)) {
+            log("starting MERGE");
             this.state = States.ELECTION;
             this.suspend_processing_application();
             this.counter += 1;
@@ -331,7 +354,7 @@ public class Node extends sinalgo.nodes.Node {
     @Override
     public void draw(Graphics g, PositionTransformation pt, boolean highlight) {
         String text = String.valueOf(this.getID());
-        super.drawNodeAsDiskWithText(g, pt, highlight, text,8, Color.WHITE);
+        super.drawNodeAsDiskWithText(g, pt, highlight, text,1, Color.WHITE);
     }
 
 //    public List<Integer> generate_color(int index) {

@@ -8,10 +8,10 @@
         <dimensions value="2"/>
 
         <!--Length of the deployment field along the x-axis. -->
-        <dimX value="100"/>
+        <dimX value="50"/>
 
         <!--Length of the deployment field along the y-axis. -->
-        <dimY value="100"/>
+        <dimY value="50"/>
 
         <!--Length of the deployment field along the z-axis. -->
         <dimZ value="50"/>
@@ -32,7 +32,7 @@
         <!--If set to true, the chosen interference model is called at the end
             of every round to test for interferring packets. To increase performance,
             set this flag to FALSE if you do not consider interference. -->
-        <interference value="false"/>
+        <interference value="true"/>
 
         <!--Set this flag to true if interference only decreases if fewer messages
             are being sent and increases if more messages are being sent. If this flag
@@ -186,16 +186,16 @@
         <defaultDistributionModel value="Grid2D"/>
 
         <!--Default interference model used when none is specified -->
-        <defaultInterferenceModel value="NoInterference"/>
+        <defaultInterferenceModel value="SINR"/>
 
         <!--Default mobility model used when none is specified -->
-        <defaultMobilityModel value="RandomWayPoint"/>
+        <defaultMobilityModel value="RandomDirection"/>
 
         <!--Default reliability model used when none is specified -->
         <defaultReliabilityModel value="ReliableDelivery"/>
 
         <!--Default node implementation used when none is specified -->
-        <defaultNodeImplementation value="trab1:Node"/>
+        <defaultNodeImplementation value="trab2:Node"/>
 
         <!--Show the models implemented by all projects in the drop down options.
             When set to false, only the models by the selected project and the default
@@ -234,7 +234,7 @@
 
         <!--Indicates whether the edges are drawn in the default draw implementation
             for the graph. -->
-        <drawEdges value="false"/>
+        <drawEdges value="true"/>
 
         <!--Indicates whether the nodes are drawn in the default draw implementation
             for the graph. -->
@@ -283,23 +283,24 @@
         <MessageTransmission constantTime="1"/>
         <RandomMessageTransmission distribution="Uniform" min="1" max="3"/>
 
+
+        <Node defaultSize="10"/>
+
+        <SINR alpha="2" beta="0.7" noise="0"/>
+
         <RandomDirection>
-            <NodeSpeed distribution="Gaussian" mean="10" variance="20"/>
-            <WaitingTime distribution="Poisson" lambda="10"/>
-            <MoveTime distribution="Uniform" min="5" max="20"/>
+            <NodeSpeed distribution="Constant" constant="5"/>
+            <WaitingTime distribution="Constant" constant="10"/>
+            <MoveTime distribution="Constant" constant="1" dx="5" dy="25"/>
         </RandomDirection>
 
-        <RandomWayPoint>
-            <Speed distribution="Gaussian" mean="2" variance="3"/>
-            <WaitingTime distribution="Poisson" lambda="10"/>
-        </RandomWayPoint>
+<!--        <RandomWayPoint>-->
+<!--            <NodeSpeed distribution="Gaussian" mean="5" variance="0"/>-->
+<!--            <Speed distribution="Gaussian" mean="2" variance="0"/>-->
+<!--            <WaitingTime distribution="Poisson" lambda="10"/>-->
+<!--            <MoveTime distribution="Uniform" min="5" max="20"/>-->
+<!--        </RandomWayPoint>-->
 
-        <Node defaultSize="50"/>
-
-        <Node>
-            <numberofdistricts value="5"/>
-            <nodes value="4"/>
-        </Node>
 
         <QUDG rMin="30" rMax="50" ProbabilityType="constant"
               connectionProbability="0.6"/>
