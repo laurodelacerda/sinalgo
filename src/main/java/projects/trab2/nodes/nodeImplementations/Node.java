@@ -17,11 +17,11 @@ public class Node extends sinalgo.nodes.Node {
     // consts
     public final double INTENSITY_SIGNAL = 15.0;
     public final int TIMER_AYCOORD = 25;
-    public final int TIMER_AYTHERE = 25;
+    public final int TIMER_AYTHERE = 10;
     public final int TIMER_MERGE = 10;
     public final int TIMER_READY = 10;
     public final int TIMER_ACCEPT = 10;
-    public final int TIMER_PRIORITY = (int) this.getID() * 5;
+    public final int TIMER_PRIORITY = (int) this.getID() * 2;
 
     public enum States {NORMAL, ELECTION, REORGANIZING} ;
 
@@ -353,21 +353,26 @@ public class Node extends sinalgo.nodes.Node {
 
     @Override
     public void draw(Graphics g, PositionTransformation pt, boolean highlight) {
+
+        this.setLeaderColor();
+
+
         String text = String.valueOf(this.getID());
-        super.drawNodeAsDiskWithText(g, pt, highlight, text,1, Color.WHITE);
+        super.drawNodeAsDiskWithText(g, pt, highlight, text,2, Color.WHITE);
     }
 
-//    public List<Integer> generate_color(int index) {
-//        List<List<Integer>> colors = new ArrayList<List<Integer>>()
-//
-//                                        (1,184,120), (125,58,192), (0,176,55), (255,85,197), (65,149,0),
-//                                        (140,125,255), (88,118,0), (70,142,255), (233,92,25), (103,184,255),
-//                                        (168,7,15), (58,220,199), (186,0,129), (41,94,28), (255,75,143),
-//                                        (249,187,95), (88,69,149), (163,100,0), (235,165,255), (236,190,140),
-//                                        (101,108,159), (255,79,110), (201,144,184), (131,59,78), (255,175,184)
-//
-//        return colors.get(index%25);
-//    }
+    public void setLeaderColor() {
+        int colors[][] = {{1,184,120}, {125,58,192}, {0,176,55}, {255,85,197}, {65,149,0},
+                            {140,125,255}, {88,118,0}, {70,142,255}, {233,92,25}, {103,184,255},
+                            {168,7,15}, {58,220,199}, {186,0,129}, {41,94,28}, {255,75,143},
+                            {249,187,95}, {88,69,149}, {163,100,0}, {235,165,255}, {236,190,140},
+                            {101,108,159}, {255,79,110}, {201,144,184}, {131,59,78}, {255,175,184}};
+
+        if (this.coord.getID() < 25) {
+            int c[] = colors[(int) this.coord.getID()];
+            this.setColor(new Color(c[0], c[1], c[2]));
+        }
+    }
 
     public void preStep() {}
     public void checkRequirements() {}
