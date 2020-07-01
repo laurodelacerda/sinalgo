@@ -32,7 +32,7 @@
         <!--If set to true, the chosen interference model is called at the end
             of every round to test for interferring packets. To increase performance,
             set this flag to FALSE if you do not consider interference. -->
-        <interference value="true"/>
+        <interference value="false"/>
 
         <!--Set this flag to true if interference only decreases if fewer messages
             are being sent and increases if more messages are being sent. If this flag
@@ -42,7 +42,7 @@
             using the additivity property. This flag only affects the asynchronous mode.
             In synchronous mode, interference is checked exactly once for every message
             in every round. -->
-        <interferenceIsAdditive value="true"/>
+        <interferenceIsAdditive value="false"/>
 
         <!--Set this flag to true if a node can receive messages while it is sending
             messages itself, otherwise to false. This flag is only relevant if interference
@@ -180,16 +180,16 @@
         <defaultMessageTransmissionModel value="RandomTime"/>
 
         <!--Default connectivity model used when none is specified -->
-        <defaultConnectivityModel value="StaticUDG"/>
+        <defaultConnectivityModel value="UDG"/>
 
         <!--Default distribution model used when none is specified -->
         <defaultDistributionModel value="Grid2D"/>
 
         <!--Default interference model used when none is specified -->
-        <defaultInterferenceModel value="SINR"/>
+        <defaultInterferenceModel value="NoInterference"/>
 
         <!--Default mobility model used when none is specified -->
-        <defaultMobilityModel value="RandomDirection"/>
+        <defaultMobilityModel value="RandomWayPoint"/>
 
         <!--Default reliability model used when none is specified -->
         <defaultReliabilityModel value="ReliableDelivery"/>
@@ -275,7 +275,11 @@
     </Framework>
     <Custom>
         <GeometricNodeCollection rMax="100"/>
-        <UDG rMax="100"/>
+        <UDG rMax="25"/>
+        <!--        <SINR alpha="2" beta="0.7" noise="0"/>-->
+        <!--        <QUDG rMin="30" rMax="50" ProbabilityType="constant"-->
+        <!--              connectionProbability="0.6"/>-->
+
 
         <AutoStart value="false"/>
         <ExitAfter value="false" rounds="100"/>
@@ -286,24 +290,18 @@
 
         <Node defaultSize="10"/>
 
-        <SINR alpha="2" beta="0.7" noise="0"/>
+<!--        <RandomDirection>-->
+<!--            <NodeSpeed distribution="Constant" constant="1"/>-->
+<!--            <WaitingTime distribution="Poisson" lambda="80"/>-->
+<!--            <MoveTime distribution="Uniform" min="5" max="25"/>-->
+<!--        </RandomDirection>-->
 
-        <RandomDirection>
-            <NodeSpeed distribution="Constant" constant="5"/>
-            <WaitingTime distribution="Constant" constant="10"/>
-            <MoveTime distribution="Constant" constant="1" dx="5" dy="25"/>
-        </RandomDirection>
+        <RandomWayPoint>
+            <Speed distribution="Constant" constant="1"/>
+            <WaitingTime distribution="Poisson" lambda="10"/>
+            <MoveTime distribution="Uniform" min="5" max="25"/>
+        </RandomWayPoint>
 
-<!--        <RandomWayPoint>-->
-<!--            <NodeSpeed distribution="Gaussian" mean="5" variance="0"/>-->
-<!--            <Speed distribution="Gaussian" mean="2" variance="0"/>-->
-<!--            <WaitingTime distribution="Poisson" lambda="10"/>-->
-<!--            <MoveTime distribution="Uniform" min="5" max="20"/>-->
-<!--        </RandomWayPoint>-->
-
-
-        <QUDG rMin="30" rMax="50" ProbabilityType="constant"
-              connectionProbability="0.6"/>
     </Custom>
 </Document>
 
