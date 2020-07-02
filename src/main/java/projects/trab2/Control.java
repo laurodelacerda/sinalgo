@@ -65,7 +65,12 @@ public final class Control {
     };
 
     public void showID() {
-//        for (Node n : this.nodes)
+        for (Node n : this.nodes)
+            n.value_to_inspect = 0;
     }
 
+    public void showCoordinator() {
+        for (Node n : this.nodes)
+            n.value_to_inspect = 1;
+    }
 }

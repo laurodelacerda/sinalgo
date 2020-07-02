@@ -27,6 +27,11 @@ public class CustomGlobal extends AbstractCustomGlobal {
         Control.instance.showID();
     }
 
+    @CustomButton(buttonText = "Show Coordinator", toolTipText = "")
+    public void showCoordinator(){
+        Control.instance.showCoordinator();
+    }
+
     @Override
     public void preRun(){
 //        Global.setAsynchronousMode(false);

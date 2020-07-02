@@ -44,6 +44,8 @@ public class Node extends sinalgo.nodes.Node {
     private int counter = 0;
     private int number_answers_ready = 0;
 
+    public int value_to_inspect = 0;
+
 
     public void init() {
         this.setRadioIntensity(INTENSITY_SIGNAL);
@@ -356,8 +358,16 @@ public class Node extends sinalgo.nodes.Node {
 
         this.setLeaderColor();
 
+        int value = -1;
 
-        String text = String.valueOf(this.getID());
+        if (this.value_to_inspect == 0) // id
+            value = (int) this.getID();
+
+        if (this.value_to_inspect == 1) // coord
+            value = (int) this.coord.getID();
+
+        String text = String.valueOf(value);
+
         super.drawNodeAsDiskWithText(g, pt, highlight, text,2, Color.WHITE);
     }
 
