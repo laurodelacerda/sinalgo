@@ -36,10 +36,8 @@ public class DelayTimer extends Timer {
     @Override
     public void fire() {
 
-        if (this.isEnabled()) {
-            this.node.log(String.format("has waited for %d steps in %s", this.timeout, String.valueOf(timer)));
+        if (this.isEnabled())
             this.node.handleTimers(this.timer);
-        }
 
     }
 
