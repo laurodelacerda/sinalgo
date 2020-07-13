@@ -26,6 +26,7 @@ public class Node extends sinalgo.nodes.Node {
     public final int TIMER_MERGE = 10; // timeout T1
     public final int TIMER_READY = 10; // timeout T2
     public final int TIMER_ACCEPT = 10;
+    public final int TIMER_ACCEPT_ANSWER = 10;
     public final int TIMER_PRIORITY = (int) this.getID() * 3;
 
     // timers
@@ -34,6 +35,7 @@ public class Node extends sinalgo.nodes.Node {
     private DelayTimer timer_merge    = new DelayTimer(this, DelayTimer.Timers.MERGE,    TIMER_MERGE);
     private DelayTimer timer_ready    = new DelayTimer(this, DelayTimer.Timers.READY,    TIMER_READY);
     private DelayTimer timer_accept   = new DelayTimer(this, DelayTimer.Timers.ACCEPT,   TIMER_ACCEPT);
+    private DelayTimer timer_accept_a = new DelayTimer(this, DelayTimer.Timers.ACCEPT_ANSWER, TIMER_ACCEPT_ANSWER);
     private DelayTimer timer_priority = new DelayTimer(this, DelayTimer.Timers.PRIORITY, TIMER_PRIORITY);
 
     private List<DelayTimer> timers_answer = new ArrayList<DelayTimer>();
@@ -150,6 +152,10 @@ public class Node extends sinalgo.nodes.Node {
             log(String.format("AcceptAnswer has not arrived! Finished ACCEPT timer after %d steps", this.TIMER_ACCEPT));
             this.recovery();
         }
+        else if (timer == DelayTimer.Timers.ACCEPT_ANSWER) {
+            log(String.format("Ready message has not arrived! Finished ACCEPT_ANSWER timer after %d steps", this.TIMER_ACCEPT_ANSWER));
+            this.recovery();
+        }
         else if (timer == DelayTimer.Timers.PRIORITY) {
             log(String.format("finished PRIORITY timer after %d steps", this.TIMER_PRIORITY));
             this.merge();
@@ -240,6 +246,7 @@ public class Node extends sinalgo.nodes.Node {
         this.timer_accept.deactivate();
         if (this.coord == m.sender){
             if (m.answer) {
+                this.timer_accept_a.activate();
                 log("received AcceptAnswer as ACCEPTED from %d", m.sender.getID());
                 this.state = States.REORGANIZING;
             }
@@ -257,6 +264,7 @@ public class Node extends sinalgo.nodes.Node {
 
         if ((this.group_id == m.group_id) && (this.state == States.REORGANIZING))
         {
+            this.timer_accept_a.deactivate();
             // this.definition = m.definition;
             this.state = States.NORMAL;
             send(new ReadyAnswer(this, true, this.group_id), this.coord);
@@ -266,6 +274,7 @@ public class Node extends sinalgo.nodes.Node {
         else {
             send(new ReadyAnswer(this, false), m.node);
             log("sending ReadyAnswer as FALSE to %d", m.node.getID());
+            this.recovery();
         }
     }
 

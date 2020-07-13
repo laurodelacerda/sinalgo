@@ -9,7 +9,7 @@ import sinalgo.nodes.timers.Timer;
 @Setter
 public class DelayTimer extends Timer {
 
-    public enum Timers {AYCOORD, AYTHERE, MERGE, READY, ACCEPT, PRIORITY};
+    public enum Timers {AYCOORD, AYTHERE, MERGE, READY, ACCEPT, ACCEPT_ANSWER, PRIORITY};
 
     private int timeout;
     private Node node;
